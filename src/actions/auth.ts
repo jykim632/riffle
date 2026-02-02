@@ -52,8 +52,8 @@ export async function signup(formData: FormData) {
   // 입력값 검증
   const validationResult = signupSchema.safeParse(rawData)
   if (!validationResult.success) {
-    const errors = validationResult.error.errors
-    return { error: errors[0]?.message || '입력값이 올바르지 않습니다.' }
+    const firstError = validationResult.error.issues[0]
+    return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
   }
 
   const { email, password, nickname, inviteCode } = validationResult.data
