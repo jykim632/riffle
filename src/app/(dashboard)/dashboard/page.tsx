@@ -27,7 +27,7 @@ export default async function DashboardPage() {
   // 현재 주차가 없으면 빈 상태 표시
   if (!currentWeek) {
     return (
-      <div className="container max-w-7xl py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <h1 className="mb-4 text-2xl font-bold">현재 주차가 없어요</h1>
           <p className="text-muted-foreground">
@@ -81,15 +81,15 @@ export default async function DashboardPage() {
   }))
 
   return (
-    <div className="container max-w-7xl py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">대시보드</h1>
-        <p className="text-muted-foreground">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl font-bold sm:text-3xl">대시보드</h1>
+        <p className="mt-1 text-sm text-muted-foreground sm:text-base">
           이번 주 제출 현황을 확인하고 요약본을 관리하세요
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         {/* 현재 주차 정보 */}
         <CurrentWeekInfo week={currentWeek} />
 

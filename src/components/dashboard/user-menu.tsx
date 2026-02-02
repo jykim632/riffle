@@ -28,18 +28,18 @@ export function UserMenu({ nickname }: UserMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-full transition-opacity hover:opacity-80">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary text-primary-foreground">
+          <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+            <AvatarFallback className="bg-primary text-xs text-primary-foreground sm:text-sm">
               {initial}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium">{nickname}</span>
+          <span className="hidden text-sm font-medium sm:inline">{nickname}</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-48 sm:w-56">
         <DropdownMenuLabel className="flex items-center gap-2">
           <User className="h-4 w-4" />
-          내 계정
+          <span className="truncate">{nickname}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">

@@ -16,14 +16,14 @@ interface HeaderProps {
 export function Header({ currentWeek, user }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
         {/* 로고 */}
-        <Link href="/dashboard" className="mr-8 flex items-center gap-2">
-          <span className="text-xl font-bold">Riffle</span>
+        <Link href="/dashboard" className="mr-4 flex items-center gap-2 sm:mr-8">
+          <span className="text-lg font-bold sm:text-xl">Riffle</span>
         </Link>
 
         {/* 네비게이션 */}
-        <nav className="flex items-center gap-6 text-sm font-medium">
+        <nav className="flex items-center gap-4 text-sm font-medium sm:gap-6">
           <Link
             href="/dashboard"
             className="transition-colors hover:text-primary"
@@ -39,11 +39,12 @@ export function Header({ currentWeek, user }: HeaderProps) {
         </nav>
 
         {/* 우측 영역 */}
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2 sm:gap-4">
           {/* 현재 주차 배지 */}
-          <Badge variant="outline" className="gap-1">
+          <Badge variant="outline" className="gap-1 text-xs sm:text-sm">
             <Calendar className="h-3 w-3" />
-            {currentWeek.week_number}주차
+            <span className="hidden sm:inline">{currentWeek.week_number}주차</span>
+            <span className="sm:hidden">{currentWeek.week_number}주</span>
           </Badge>
 
           {/* 사용자 메뉴 */}
