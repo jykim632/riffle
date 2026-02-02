@@ -13,6 +13,16 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { SummaryContent } from './summary-content'
 import { createSummary, updateSummary } from '@/actions/summaries'
 
@@ -28,6 +38,8 @@ export function SummaryForm({ mode, weekId, summaryId, initialContent = '', week
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [content, setContent] = useState(initialContent)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [pendingData, setPendingData] = useState<CreateSummaryInput | UpdateSummaryInput | null>(null)
 
   const schema = mode === 'create' ? createSummarySchema : updateSummarySchema
 
@@ -43,7 +55,7 @@ export function SummaryForm({ mode, weekId, summaryId, initialContent = '', week
         : { summaryId, content: initialContent },
   })
 
-  const onSubmit = async (data: CreateSummaryInput | UpdateSummaryInput) => {
+  const executeSubmit = async (data: CreateSummaryInput | UpdateSummaryInput) => {
     setLoading(true)
     setError(null)
 
@@ -66,64 +78,101 @@ export function SummaryForm({ mode, weekId, summaryId, initialContent = '', week
     }
   }
 
+  const onSubmit = async (data: CreateSummaryInput | UpdateSummaryInput) => {
+    if (mode === 'edit') {
+      setPendingData(data)
+      setShowConfirmDialog(true)
+    } else {
+      await executeSubmit(data)
+    }
+  }
+
+  const handleConfirm = async () => {
+    if (pendingData) {
+      setShowConfirmDialog(false)
+      await executeSubmit(pendingData)
+      setPendingData(null)
+    }
+  }
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* 입력 폼 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{mode === 'create' ? '요약본 작성' : '요약본 수정'}</CardTitle>
-          {weekTitle && <CardDescription>{weekTitle}</CardDescription>}
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="content">내용 (마크다운 지원)</Label>
-              <Textarea
-                id="content"
-                rows={20}
-                placeholder="# 제목&#10;&#10;**볼드**, *이탤릭*, [링크](https://example.com)&#10;&#10;- 리스트 항목&#10;- 리스트 항목"
-                {...register('content')}
-                disabled={loading}
-                className="font-mono text-sm"
-                onChange={(e) => setContent(e.target.value)}
-              />
-              {errors.content && (
-                <p className="text-sm text-destructive">{errors.content.message}</p>
+    <>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* 입력 폼 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{mode === 'create' ? '요약본 작성' : '요약본 수정'}</CardTitle>
+            {weekTitle && <CardDescription>{weekTitle}</CardDescription>}
+          </CardHeader>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <CardContent className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                  {error}
+                </div>
               )}
-              <p className="text-xs text-muted-foreground">
-                10자 이상, 10000자 이하로 작성해주세요
+
+              <div className="space-y-2">
+                <Label htmlFor="content">내용 (마크다운 지원)</Label>
+                <Textarea
+                  id="content"
+                  rows={20}
+                  placeholder="# 제목&#10;&#10;**볼드**, *이탤릭*, [링크](https://example.com)&#10;&#10;- 리스트 항목&#10;- 리스트 항목"
+                  {...register('content')}
+                  disabled={loading}
+                  className="font-mono text-sm"
+                  onChange={(e) => setContent(e.target.value)}
+                />
+                {errors.content && (
+                  <p className="text-sm text-destructive">{errors.content.message}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  10자 이상, 10000자 이하로 작성해주세요
+                </p>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? '제출 중...' : mode === 'create' ? '제출하기' : '수정하기'}
+              </Button>
+            </CardContent>
+          </form>
+        </Card>
+
+        {/* 실시간 프리뷰 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>미리보기</CardTitle>
+            <CardDescription>작성 중인 내용이 어떻게 보일지 확인하세요</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {content.trim() ? (
+              <SummaryContent content={content} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                내용을 입력하면 미리보기가 여기에 표시됩니다
               </p>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? '제출 중...' : mode === 'create' ? '제출하기' : '수정하기'}
-            </Button>
+            )}
           </CardContent>
-        </form>
-      </Card>
+        </Card>
+      </div>
 
-      {/* 실시간 프리뷰 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>미리보기</CardTitle>
-          <CardDescription>작성 중인 내용이 어떻게 보일지 확인하세요</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {content.trim() ? (
-            <SummaryContent content={content} />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              내용을 입력하면 미리보기가 여기에 표시됩니다
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+      {/* 수정 확인 모달 */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>요약본 수정</AlertDialogTitle>
+            <AlertDialogDescription>
+              요약본을 수정하시겠습니까? 수정된 내용은 새로운 버전으로 저장됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm} disabled={loading}>
+              {loading ? '수정 중...' : '수정'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

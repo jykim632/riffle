@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { formatDateRange, formatDateTime } from '@/lib/utils/date'
 
 interface WeekOverviewProps {
@@ -40,10 +40,10 @@ export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOvervie
           이번 주 현황
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 sm:space-y-6">
+      <CardContent className="space-y-8">
         {/* 주차 정보 */}
         <div>
-          <div className="text-2xl font-bold sm:text-3xl">{week.week_number}주차</div>
+          <div className="text-3xl font-bold sm:text-4xl">{week.week_number}주차</div>
           {week.title && (
             <div className="mt-1 text-sm text-muted-foreground">{week.title}</div>
           )}
@@ -52,9 +52,6 @@ export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOvervie
             {formatDateRange(week.start_date, week.end_date)}
           </div>
         </div>
-
-        {/* 구분선 */}
-        <div className="border-t" />
 
         {/* 내 제출 현황 */}
         <div>
@@ -68,14 +65,10 @@ export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOvervie
           </div>
 
           {hasSubmitted ? (
-            <div className="flex items-center gap-3 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-green-600 dark:text-green-400">
-                  제출 완료
-                </div>
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div>
+                <div className="text-sm font-medium">제출 완료</div>
                 <div className="text-xs text-muted-foreground">
                   {formatDateTime(mySubmission.created_at)}
                 </div>
@@ -83,12 +76,9 @@ export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOvervie
             </div>
           ) : (
             <div>
-              <div className="mb-3 rounded-lg bg-muted/50 p-3">
-                <div className="text-sm font-medium">미제출</div>
-                <div className="text-xs text-muted-foreground">
-                  이번 주 요약본을 아직 제출하지 않았어요
-                </div>
-              </div>
+              <p className="mb-3 text-sm text-muted-foreground">
+                이번 주 요약본을 아직 제출하지 않았어요
+              </p>
               <Button asChild className="w-full">
                 <Link href={`/summaries/new?week=${week.id}`}>
                   요약본 제출하기
@@ -98,9 +88,6 @@ export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOvervie
           )}
         </div>
 
-        {/* 구분선 */}
-        <div className="border-t" />
-
         {/* 전체 제출 현황 */}
         <div>
           <div className="mb-3 flex items-center gap-2 text-sm font-medium">
@@ -108,28 +95,23 @@ export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOvervie
             전체 제출 현황
           </div>
 
-          <div className="mb-3 flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{submittedCount}</span>
-            <span className="text-sm text-muted-foreground">
-              / {totalMembers}명 제출
-            </span>
-          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">진행률</span>
+              <span className="font-medium">{submittedCount} / {totalMembers}명</span>
+            </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {allSubmissions.map((member) => (
-              <Badge
-                key={member.nickname}
-                variant={member.has_submitted ? 'default' : 'secondary'}
-                className="gap-1 text-xs"
-              >
-                {member.has_submitted ? (
-                  <CheckCircle2 className="h-3 w-3" />
-                ) : (
-                  <Circle className="h-3 w-3" />
-                )}
-                {member.nickname}
-              </Badge>
-            ))}
+            <Progress value={(submittedCount / totalMembers) * 100} />
+
+            {submittedCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {allSubmissions
+                  .filter((s) => s.has_submitted)
+                  .map((s) => s.nickname)
+                  .join(', ')}
+                님이 제출했어요
+              </p>
+            )}
           </div>
         </div>
       </CardContent>
