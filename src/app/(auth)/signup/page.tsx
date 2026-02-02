@@ -25,7 +25,7 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
   })
 
-  const onSubmit = async (data: SignupInput) {
+  const onSubmit = async (data: SignupInput) => {
     setLoading(true)
     setError(null)
 
