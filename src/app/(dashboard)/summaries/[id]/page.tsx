@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { SummaryContent } from '@/components/summary/summary-content'
 import { SummaryActions } from '@/components/summary/summary-actions'
 
@@ -38,6 +40,16 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
 
   const isAuthor = summary.author_id === user.id
 
+  // 3. 같은 작성자의 같은 주차 모든 버전 조회
+  const { data: allVersions } = await supabase
+    .from('summaries')
+    .select('id, created_at')
+    .eq('author_id', summary.author_id)
+    .eq('week_id', summary.week_id)
+    .order('created_at', { ascending: true })
+
+  const hasMultipleVersions = allVersions && allVersions.length > 1
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <Card>
@@ -54,6 +66,31 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
             </div>
             <SummaryActions summaryId={params.id} isAuthor={isAuthor} />
           </div>
+
+          {/* 버전 히스토리 */}
+          {hasMultipleVersions && (
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-sm font-medium mb-2">제출 히스토리</p>
+              <div className="flex flex-wrap gap-2">
+                {allVersions.map((version, index) => {
+                  const isCurrentVersion = version.id === params.id
+                  return (
+                    <Button
+                      key={version.id}
+                      asChild
+                      variant={isCurrentVersion ? 'default' : 'outline'}
+                      size="sm"
+                    >
+                      <Link href={`/summaries/${version.id}`}>
+                        {index + 1}차 제출
+                        {index === allVersions.length - 1 && ' (최신)'}
+                      </Link>
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <SummaryContent content={summary.content} />
