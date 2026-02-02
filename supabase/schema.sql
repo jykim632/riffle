@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.invite_codes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT NOT NULL UNIQUE,
-  created_by UUID NOT NULL REFERENCES public.profiles(id),
+  created_by UUID REFERENCES public.profiles(id),  -- NULL 허용 (첫 초대 코드용)
   used_by UUID REFERENCES public.profiles(id),
   is_used BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

@@ -17,13 +17,13 @@ ON CONFLICT (week_number) DO NOTHING;
 -- =============================================================================
 -- 2. Create temporary invite code for first admin
 -- =============================================================================
--- This uses a dummy UUID for created_by since we don't have an admin yet.
--- After creating the first admin account, you can update this to reference them.
+-- created_by is NULL since we don't have an admin yet.
+-- After signup, the first admin can create codes normally with their ID.
 
 INSERT INTO public.invite_codes (code, created_by, is_used)
 VALUES (
   'ADMIN001',
-  '00000000-0000-0000-0000-000000000000'::uuid,
+  NULL,
   false
 )
 ON CONFLICT (code) DO NOTHING;
