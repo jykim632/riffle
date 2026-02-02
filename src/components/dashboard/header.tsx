@@ -1,0 +1,56 @@
+import Link from 'next/link'
+import { Calendar } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { UserMenu } from './user-menu'
+
+interface HeaderProps {
+  currentWeek: {
+    week_number: number
+    title: string | null
+  }
+  user: {
+    nickname: string
+  }
+}
+
+export function Header({ currentWeek, user }: HeaderProps) {
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+        {/* 로고 */}
+        <Link href="/dashboard" className="mr-4 flex items-center gap-2 sm:mr-8">
+          <span className="text-lg font-bold sm:text-xl">Riffle</span>
+        </Link>
+
+        {/* 네비게이션 */}
+        <nav className="flex items-center gap-4 text-sm font-medium sm:gap-6">
+          <Link
+            href="/dashboard"
+            className="transition-colors hover:text-primary"
+          >
+            대시보드
+          </Link>
+          <Link
+            href="/summaries"
+            className="transition-colors hover:text-primary"
+          >
+            요약본
+          </Link>
+        </nav>
+
+        {/* 우측 영역 */}
+        <div className="ml-auto flex items-center gap-2 sm:gap-4">
+          {/* 현재 주차 배지 */}
+          <Badge variant="outline" className="gap-1 text-xs sm:text-sm">
+            <Calendar className="h-3 w-3" />
+            <span className="hidden sm:inline">{currentWeek.week_number}주차</span>
+            <span className="sm:hidden">{currentWeek.week_number}주</span>
+          </Badge>
+
+          {/* 사용자 메뉴 */}
+          <UserMenu nickname={user.nickname} />
+        </div>
+      </div>
+    </header>
+  )
+}

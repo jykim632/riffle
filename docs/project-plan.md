@@ -29,7 +29,7 @@
 ### 운영 방식
 - **폐쇄형 스터디**: 초대 코드를 통해서만 가입 가능
 - **주차 자동 전환**: 매주 월요일 00:00에 자동으로 새로운 주차 시작
-- **1인 1주 1회**: 한 주에 한 사람당 하나의 요약본만 제출 가능
+- **1인 1주 다중 제출**: 한 주에 여러 요약본 제출 가능, 최신 것만 기본 노출
 
 ---
 
@@ -88,15 +88,16 @@
 - **작성**
   - 마크다운 에디터 제공
   - 실시간 프리뷰
-  - 이번주에 이미 제출한 경우 작성 불가 (1인 1주 1회)
+  - 같은 주차에 여러 요약본 제출 가능
 - **수정**
   - 본인이 작성한 요약본만 수정 가능
   - 마크다운 에디터로 편집
 - **삭제**
   - 본인이 작성한 요약본만 삭제 가능
 - **조회**
-  - 모든 사용자의 요약본 조회 가능
+  - 모든 사용자의 요약본 조회 가능 (최신 것만 기본 노출)
   - 주차별 필터링
+  - `latest_summaries` 뷰 활용
 
 ### 3. 대시보드
 - **이번주 요약본 목록**
@@ -106,7 +107,7 @@
   - 제출한 멤버 목록 (배지)
   - 미제출 멤버 목록
 - **요약본 작성 버튼**
-  - 이미 제출한 경우 비활성화
+  - 항상 활성화 (다중 제출 가능)
 
 ### 4. 주차 관리
 - **자동 전환**
@@ -159,7 +160,10 @@ CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   nickname TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  -- 빈 닉네임 방지
+  CONSTRAINT chk_profiles_nickname_not_empty CHECK (length(trim(nickname)) > 0)
 );
 ```
 
@@ -172,11 +176,18 @@ CREATE TABLE public.profiles (
 CREATE TABLE public.invite_codes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT NOT NULL UNIQUE,
-  created_by UUID NOT NULL REFERENCES public.profiles(id),
+  created_by UUID REFERENCES public.profiles(id),  -- NULL 허용 (첫 초대 코드용)
   used_by UUID REFERENCES public.profiles(id),
   is_used BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  used_at TIMESTAMPTZ
+  used_at TIMESTAMPTZ,
+
+  -- 상태 일관성 보장: is_used, used_by, used_at 동기화
+  CONSTRAINT chk_invite_used_consistency CHECK (
+    (is_used = true AND used_by IS NOT NULL AND used_at IS NOT NULL)
+    OR
+    (is_used = false AND used_by IS NULL AND used_at IS NULL)
+  )
 );
 ```
 
@@ -184,6 +195,7 @@ CREATE TABLE public.invite_codes (
 - 8자리 랜덤 코드 (nanoid)
 - 한 번 사용하면 재사용 불가
 - 누가 생성했고 누가 사용했는지 추적
+- `created_by` NULL 허용: 첫 초대 코드는 DB에 직접 생성 가능
 
 #### `weeks` - 주차
 ```sql
@@ -194,12 +206,15 @@ CREATE TABLE public.weeks (
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   is_current BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  -- 날짜 범위 검증
+  CONSTRAINT chk_weeks_date_range CHECK (end_date >= start_date)
 );
 ```
 
 **특징**
-- `is_current`: 현재 주차 여부 (한 번에 하나만 true)
+- `is_current`: 현재 주차 여부 (UNIQUE partial index로 단일 행 보장)
 - `title`: "2024년 1월 1주차" 같은 제목
 
 #### `summaries` - 요약본
@@ -212,13 +227,15 @@ CREATE TABLE public.summaries (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-  UNIQUE(week_id, author_id)  -- 1인 1주 1회 보장
+  -- 빈 요약본 제출 방지
+  CONSTRAINT chk_summaries_content_not_empty CHECK (length(trim(content)) > 0)
 );
 ```
 
 **특징**
 - `content`: 마크다운 형식 텍스트
-- UNIQUE 제약으로 1인 1주 1회 제출 보장
+- **1인 1주 다중 제출 가능**: 같은 주차에 여러 요약본 제출 가능
+- `latest_summaries` 뷰로 최신 요약만 조회
 
 ### 인덱스
 ```sql
@@ -228,8 +245,13 @@ CREATE INDEX idx_summaries_week_id ON public.summaries(week_id);
 -- 사용자별 요약본 조회 최적화
 CREATE INDEX idx_summaries_author_id ON public.summaries(author_id);
 
--- 현재 주차 빠른 조회
-CREATE INDEX idx_weeks_is_current ON public.weeks(is_current) WHERE is_current = true;
+-- 주차별 사용자별 최신 요약 조회 최적화
+CREATE INDEX idx_summaries_week_author_created
+  ON public.summaries(week_id, author_id, created_at DESC);
+
+-- 현재 주차 빠른 조회 + 단일 행 보장 (UNIQUE partial index)
+CREATE UNIQUE INDEX idx_weeks_single_current
+  ON public.weeks (is_current) WHERE is_current = true;
 
 -- 초대 코드 조회 최적화
 CREATE INDEX idx_invite_codes_code ON public.invite_codes(code) WHERE is_used = false;
@@ -237,32 +259,60 @@ CREATE INDEX idx_invite_codes_code ON public.invite_codes(code) WHERE is_used = 
 
 ### RLS (Row Level Security) 정책
 
+**보안 강화**:
+- 모든 테이블에 `FORCE ROW LEVEL SECURITY` 적용 (테이블 소유자도 정책 적용)
+- `auth.uid()` 호출을 `(SELECT auth.uid())`로 최적화 (행마다 호출 방지)
+
 #### profiles 테이블
 ```sql
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles FORCE ROW LEVEL SECURITY;
+
 -- 모든 인증 사용자가 프로필 조회 가능
 CREATE POLICY "프로필 조회" ON public.profiles
   FOR SELECT TO authenticated USING (true);
 
 -- 본인 프로필만 수정 가능
 CREATE POLICY "본인 프로필 수정" ON public.profiles
-  FOR UPDATE TO authenticated USING (auth.uid() = id);
+  FOR UPDATE TO authenticated USING ((SELECT auth.uid()) = id);
+```
+
+#### invite_codes 테이블
+```sql
+ALTER TABLE public.invite_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.invite_codes FORCE ROW LEVEL SECURITY;
+
+-- 정책 없음 (의도적): service_role (Server Actions)을 통해서만 접근
+-- authenticated 사용자의 직접 접근 차단
+```
+
+#### weeks 테이블
+```sql
+ALTER TABLE public.weeks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.weeks FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY "주차 조회" ON public.weeks
+  FOR SELECT TO authenticated USING (true);
 ```
 
 #### summaries 테이블
 ```sql
+ALTER TABLE public.summaries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.summaries FORCE ROW LEVEL SECURITY;
+
 -- 모든 인증 사용자가 요약본 조회 가능
 CREATE POLICY "요약본 조회" ON public.summaries
   FOR SELECT TO authenticated USING (true);
 
 -- 본인 요약본만 작성/수정/삭제 가능
 CREATE POLICY "요약본 작성" ON public.summaries
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = author_id);
+  FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid()) = author_id);
 
 CREATE POLICY "요약본 수정" ON public.summaries
-  FOR UPDATE TO authenticated USING (auth.uid() = author_id);
+  FOR UPDATE TO authenticated USING ((SELECT auth.uid()) = author_id);
 
 CREATE POLICY "요약본 삭제" ON public.summaries
-  FOR DELETE TO authenticated USING (auth.uid() = author_id);
+  FOR DELETE TO authenticated USING ((SELECT auth.uid()) = author_id);
 ```
 
 ### 트리거 - 프로필 자동 생성
@@ -273,17 +323,48 @@ BEGIN
   INSERT INTO public.profiles (id, nickname, role)
   VALUES (
     NEW.id,
-    NEW.raw_user_meta_data->>'nickname',
-    COALESCE(NEW.raw_user_meta_data->>'role', 'member')
+    COALESCE(NEW.raw_user_meta_data->>'nickname', 'User_' || LEFT(NEW.id::text, 8)),
+    'member'  -- 항상 member로 강제. admin은 DB에서 직접 부여
   );
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 ```
+
+**보안 개선**:
+- `role`은 항상 `'member'`로 강제 (사용자 입력 무시)
+- 클라이언트에서 `{ role: 'admin' }` 주입 시도 차단
+- admin 권한은 DB에서 직접 부여만 가능
+- 닉네임 미제공 시 `'User_'` + UUID 앞 8자리로 fallback
+
+### 뷰 (View)
+
+#### `latest_summaries` - 최신 요약본만 조회
+```sql
+CREATE OR REPLACE VIEW public.latest_summaries AS
+SELECT DISTINCT ON (week_id, author_id)
+  id,
+  week_id,
+  author_id,
+  content,
+  created_at,
+  updated_at
+FROM public.summaries
+ORDER BY week_id, author_id, created_at DESC;
+
+-- 뷰에도 RLS 적용
+ALTER VIEW public.latest_summaries SET (security_invoker = on);
+```
+
+**사용법**:
+- 전체 요약 이력: `SELECT * FROM summaries`
+- 최신 요약만: `SELECT * FROM latest_summaries`
 
 ### pg_cron - 주차 자동 전환
 ```sql
@@ -291,22 +372,26 @@ SELECT cron.schedule(
   'auto-advance-week',
   '0 15 * * 0',  -- 일요일 15:00 UTC = 월요일 00:00 KST
   $$
-  -- 현재 주차 비활성화
-  UPDATE public.weeks SET is_current = false WHERE is_current = true;
-
-  -- 새 주차 생성
+  -- 주차 전환 (원자적 실행)
+  WITH deactivate AS (
+    UPDATE public.weeks SET is_current = false WHERE is_current = true
+    RETURNING week_number
+  )
   INSERT INTO public.weeks (week_number, title, start_date, end_date, is_current)
   SELECT
-    COALESCE(MAX(week_number), 0) + 1,
-    TO_CHAR(CURRENT_DATE, 'YYYY"년" MM"월"') || ' ' ||
-      CEIL(EXTRACT(DAY FROM CURRENT_DATE) / 7.0)::INT || '주차',
-    CURRENT_DATE,
-    CURRENT_DATE + INTERVAL '6 days',
-    true
-  FROM public.weeks;
+    COALESCE((SELECT MAX(week_number) FROM public.weeks), 0) + 1,
+    TO_CHAR((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date, 'YYYY"년" MM"월"') || ' ' ||
+      CEIL(EXTRACT(DAY FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date) / 7.0)::INT || '주차',
+    (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date,
+    (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date + INTERVAL '6 days',
+    true;
   $$
 );
 ```
+
+**개선사항**:
+- CTE로 UPDATE + INSERT 원자적 실행
+- `AT TIME ZONE 'Asia/Seoul'`로 KST 명시적 처리
 
 ---
 
@@ -527,12 +612,12 @@ riffle/
 
 3. **요약본 작성 페이지**
    - `src/app/(main)/summaries/new/page.tsx`
-   - 이미 제출한 경우 안내 메시지
    - 에디터 + 제출 버튼
+   - 다중 제출 가능
 
 4. **요약본 작성 액션**
    - `src/actions/summaries.ts`에 `createSummary` 함수
-   - 중복 제출 체크 (UNIQUE 제약 활용)
+   - 여러 요약본 제출 가능 (UNIQUE 제약 없음)
 
 5. **요약본 상세 페이지**
    - `src/app/(main)/summaries/[id]/page.tsx`
@@ -886,9 +971,9 @@ export default async function DashboardPage() {
     return <div>현재 주차가 설정되지 않았습니다.</div>
   }
 
-  // 이번주 요약본 + 작성자 정보
+  // 이번주 요약본 + 작성자 정보 (최신 것만)
   const { data: summaries } = await supabase
-    .from('summaries')
+    .from('latest_summaries')
     .select(`
       *,
       author:profiles(nickname)
@@ -900,10 +985,6 @@ export default async function DashboardPage() {
   const { data: members } = await supabase
     .from('profiles')
     .select('id, nickname')
-
-  // 현재 사용자
-  const { data: { user } } = await supabase.auth.getUser()
-  const hasSubmitted = summaries?.some(s => s.author_id === user?.id)
 
   return (
     <div>
@@ -932,12 +1013,10 @@ export default async function DashboardPage() {
         ))}
       </section>
 
-      {/* 작성 버튼 */}
-      {!hasSubmitted && (
-        <Link href="/summaries/new">
-          <Button>요약본 작성하기</Button>
-        </Link>
-      )}
+      {/* 작성 버튼 (항상 활성화 - 다중 제출 가능) */}
+      <Link href="/summaries/new">
+        <Button>요약본 작성하기</Button>
+      </Link>
     </div>
   )
 }
@@ -995,14 +1074,15 @@ export async function createInviteCode() {
 
 2. **요약본 작성**
    - [ ] 마크다운 에디터로 요약본 작성 가능
-   - [ ] 한 주에 한 번만 제출 가능 (중복 제출 시 에러)
+   - [ ] 같은 주차에 여러 요약본 제출 가능
    - [ ] 본인 요약본만 수정/삭제 가능
    - [ ] 마크다운이 올바르게 렌더링됨
+   - [ ] `latest_summaries` 뷰로 최신 것만 표시
 
 3. **대시보드**
-   - [ ] 이번주 요약본 목록 표시
+   - [ ] 이번주 요약본 목록 표시 (최신 것만)
    - [ ] 제출자/미제출자 배지 표시
-   - [ ] 이미 제출한 경우 "작성하기" 버튼 비활성화
+   - [ ] "작성하기" 버튼 항상 활성화
 
 4. **주차 관리**
    - [ ] 과거 주차 목록 조회 가능
