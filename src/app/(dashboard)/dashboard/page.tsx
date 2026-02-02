@@ -1,9 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { CurrentWeekInfo } from '@/components/dashboard/current-week-info'
-import { MySubmissionStatus } from '@/components/dashboard/my-submission-status'
-import { AllSubmissionsStatus } from '@/components/dashboard/all-submissions-status'
-import { RecentSummaries } from '@/components/dashboard/recent-summaries'
+import { WeekOverview } from '@/components/dashboard/week-overview'
+import { CurrentWeekSummaries } from '@/components/dashboard/current-week-summaries'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -64,46 +62,37 @@ export default async function DashboardPage() {
         allSubmissions?.some((s) => s.author_id === profile.id) ?? false,
     })) ?? []
 
-  // 5. 최근 요약본 (JOIN으로 주차 정보 포함)
-  const { data: recentSummariesRaw } = await supabase
-    .from('summaries')
-    .select('id, content, created_at, weeks(week_number, title)')
-    .eq('author_id', user.id)
+  // 5. 현재 주차 요약본 (latest_summaries 뷰 사용)
+  const { data: currentWeekSummariesRaw } = await supabase
+    .from('latest_summaries')
+    .select('id, content, created_at, profiles(nickname)')
+    .eq('week_id', currentWeek.id)
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(10)
 
   // Supabase JOIN 결과를 올바른 타입으로 변환
-  const recentSummaries = recentSummariesRaw?.map((summary: any) => ({
+  const currentWeekSummaries = currentWeekSummariesRaw?.map((summary: any) => ({
     id: summary.id,
     content: summary.content,
     created_at: summary.created_at,
-    weeks: Array.isArray(summary.weeks) ? summary.weeks[0] : summary.weeks,
+    profiles: Array.isArray(summary.profiles) ? summary.profiles[0] : summary.profiles,
   }))
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl font-bold sm:text-3xl">대시보드</h1>
-        <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-          이번 주 제출 현황을 확인하고 요약본을 관리하세요
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
-        {/* 현재 주차 정보 */}
-        <CurrentWeekInfo week={currentWeek} />
-
-        {/* 내 제출 현황 */}
-        <MySubmissionStatus
-          submission={mySubmission}
-          weekId={currentWeek.id}
+        {/* 이번 주 현황 (주차 정보 + 내 제출 + 전체 제출) */}
+        <WeekOverview
+          week={currentWeek}
+          mySubmission={mySubmission}
+          allSubmissions={submissionsStatus}
         />
 
-        {/* 전체 제출 현황 */}
-        <AllSubmissionsStatus submissions={submissionsStatus} />
-
-        {/* 최근 요약본 */}
-        <RecentSummaries summaries={recentSummaries ?? []} />
+        {/* 이번 주 요약본 */}
+        <CurrentWeekSummaries
+          summaries={currentWeekSummaries ?? []}
+          weekId={currentWeek.id}
+        />
       </div>
     </div>
   )
