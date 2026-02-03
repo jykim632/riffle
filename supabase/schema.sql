@@ -183,7 +183,7 @@ CREATE TRIGGER on_auth_user_created
 --   )
 --   INSERT INTO public.weeks (week_number, title, start_date, end_date, is_current)
 --   SELECT
---     COALESCE((SELECT MAX(week_number) FROM public.weeks), 0) + 1,
+--     EXTRACT(WEEK FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date),
 --     TO_CHAR((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date, 'YYYY"년" MM"월"') || ' ' ||
 --       CEIL(EXTRACT(DAY FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date) / 7.0)::INT || '주차',
 --     (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date,
@@ -210,6 +210,21 @@ ORDER BY week_id, author_id, created_at DESC;
 
 -- latest_summaries에도 RLS 적용
 ALTER VIEW public.latest_summaries SET (security_invoker = on);
+
+-- first_summaries: 각 사용자의 주차별 첫 번째 요약만 조회
+CREATE OR REPLACE VIEW public.first_summaries AS
+SELECT DISTINCT ON (week_id, author_id)
+  id,
+  week_id,
+  author_id,
+  content,
+  created_at,
+  updated_at
+FROM public.summaries
+ORDER BY week_id, author_id, created_at ASC;
+
+-- first_summaries에도 RLS 적용
+ALTER VIEW public.first_summaries SET (security_invoker = on);
 
 -- ============================================================================
 -- 7. 초기 데이터 (선택 사항)

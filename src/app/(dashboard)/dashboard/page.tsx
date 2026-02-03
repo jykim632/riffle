@@ -62,9 +62,9 @@ export default async function DashboardPage() {
         allSubmissions?.some((s) => s.author_id === profile.id) ?? false,
     })) ?? []
 
-  // 5. 현재 주차 요약본 (latest_summaries 뷰 사용)
+  // 5. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
   const { data: currentWeekSummariesRaw } = await supabase
-    .from('latest_summaries')
+    .from('first_summaries')
     .select('id, content, created_at, profiles(nickname)')
     .eq('week_id', currentWeek.id)
     .order('created_at', { ascending: false })

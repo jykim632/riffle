@@ -1,10 +1,8 @@
 import Link from 'next/link'
-import { Calendar, CheckCircle2, Circle, Users } from 'lucide-react'
+import { Calendar, CheckCircle2, Users } from 'lucide-react'
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -34,12 +32,6 @@ export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOvervie
 
   return (
     <Card className="shadow-sm transition-shadow hover:shadow-md">
-      <CardHeader className="pb-3 sm:pb-6">
-        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-          <Calendar className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
-          이번 주 현황
-        </CardTitle>
-      </CardHeader>
       <CardContent className="space-y-8">
         {/* 주차 정보 */}
         <div>
@@ -55,36 +47,25 @@ export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOvervie
 
         {/* 내 제출 현황 */}
         <div>
-          <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-            {hasSubmitted ? (
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-            ) : (
-              <Circle className="h-4 w-4 text-muted-foreground" />
-            )}
-            내 제출 현황
-          </div>
+          <div className="mb-3 text-sm font-medium">내 제출 현황</div>
 
           {hasSubmitted ? (
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <div>
-                <div className="text-sm font-medium">제출 완료</div>
-                <div className="text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium">제출 완료</span>
+                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">
                   {formatDateTime(mySubmission.created_at)}
-                </div>
+                </span>
               </div>
             </div>
           ) : (
-            <div>
-              <p className="mb-3 text-sm text-muted-foreground">
-                이번 주 요약본을 아직 제출하지 않았어요
-              </p>
-              <Button asChild className="w-full">
-                <Link href={`/summaries/new?week=${week.id}`}>
-                  요약본 제출하기
-                </Link>
-              </Button>
-            </div>
+            <Button asChild className="w-full">
+              <Link href={`/summaries/new?week=${week.id}`}>
+                요약본 제출하기
+              </Link>
+            </Button>
           )}
         </div>
 
