@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { SummaryForm } from '@/components/summary/summary-form'
+import { isSeasonMember, isAdmin } from '@/lib/utils/season-membership'
+import { AccessDeniedPage } from '@/components/season/access-denied-page'
 
 interface Params {
   id: string
@@ -19,15 +21,30 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
     redirect('/login')
   }
 
-  // 2. 요약본 조회
-  const { data: summary, error } = await supabase
+  // 2. 요약본 조회 (시즌 정보 포함)
+  const { data: summaryRaw, error } = await supabase
     .from('summaries')
-    .select('id, content, week_id, author_id')
+    .select(`
+      id,
+      content,
+      week_id,
+      author_id,
+      weeks!inner(season_id)
+    `)
     .eq('id', params.id)
     .maybeSingle()
 
-  if (error || !summary) {
+  if (error || !summaryRaw) {
     notFound()
+  }
+
+  // Supabase JOIN 결과 타입 처리
+  const summary = {
+    id: summaryRaw.id,
+    content: summaryRaw.content,
+    week_id: summaryRaw.week_id,
+    author_id: summaryRaw.author_id,
+    weeks: Array.isArray(summaryRaw.weeks) ? summaryRaw.weeks[0] : summaryRaw.weeks,
   }
 
   // 3. 본인 확인 (RLS가 막지만 UI에서도 체크)
@@ -35,7 +52,23 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
     redirect(`/mine/${params.id}`)
   }
 
-  // 4. 현재 시즌 확인
+  // 4. 멤버십 확인 (관리자는 항상 허용)
+  const admin = await isAdmin(user.id)
+  const weekSeasonId = summary.weeks.season_id
+  const member = await isSeasonMember(user.id, weekSeasonId)
+
+  if (!admin && !member) {
+    return (
+      <AccessDeniedPage
+        title="수정 권한 없음"
+        message="해당 시즌의 참여자만 수정할 수 있습니다."
+        backHref={`/summaries/${params.id}`}
+        backLabel="요약본 보기"
+      />
+    )
+  }
+
+  // 5. 현재 시즌 확인
   const { data: currentSeason } = await supabase
     .from('seasons')
     .select('id')
@@ -53,7 +86,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
     )
   }
 
-  // 5. 최근 4주 조회 (현재 시즌만)
+  // 6. 최근 4주 조회 (현재 시즌만)
   const { data: recentWeeks } = await supabase
     .from('weeks')
     .select('id, season_id, week_number, title, start_date, end_date, is_current')
@@ -63,7 +96,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
 
   let weeks = recentWeeks || []
 
-  // 6. 엣지케이스: 현재 week_id가 최근 4주에 없으면 추가 조회 (다른 시즌 주차일 수도 있음)
+  // 7. 엣지케이스: 현재 week_id가 최근 4주에 없으면 추가 조회 (다른 시즌 주차일 수도 있음)
   const currentWeekId = summary.week_id
   const isInRecent = weeks.some((w) => w.id === currentWeekId)
 

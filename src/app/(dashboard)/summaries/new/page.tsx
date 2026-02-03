@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SummaryForm } from '@/components/summary/summary-form'
+import { isCurrentSeasonMember, isAdmin } from '@/lib/utils/season-membership'
+import { AccessDeniedPage } from '@/components/season/access-denied-page'
 
 interface SearchParams {
   week?: string
@@ -39,7 +41,20 @@ export default async function NewSummaryPage(props: { searchParams: Promise<Sear
     )
   }
 
-  // 3. 현재 주차 확인 (기본값 결정용)
+  // 3. 멤버십 확인 (관리자는 항상 허용)
+  const admin = await isAdmin(user.id)
+  const member = await isCurrentSeasonMember(user.id)
+
+  if (!admin && !member) {
+    return (
+      <AccessDeniedPage
+        title="시즌 참여 필요"
+        message="현재 시즌에 참여하지 않았습니다. 시즌에 참여하려면 관리자에게 문의하세요."
+      />
+    )
+  }
+
+  // 4. 현재 주차 확인 (기본값 결정용)
   const { data: currentWeek } = await supabase
     .from('weeks')
     .select('id')
@@ -60,7 +75,7 @@ export default async function NewSummaryPage(props: { searchParams: Promise<Sear
     )
   }
 
-  // 4. 최근 4주 조회 (현재 시즌만)
+  // 5. 최근 4주 조회 (현재 시즌만)
   const { data: weeks } = await supabase
     .from('weeks')
     .select('id, season_id, week_number, title, start_date, end_date, is_current')
@@ -81,7 +96,7 @@ export default async function NewSummaryPage(props: { searchParams: Promise<Sear
     )
   }
 
-  // 5. 초기 weekId 결정 (URL query 또는 현재 주차)
+  // 6. 초기 weekId 결정 (URL query 또는 현재 주차)
   const weekId = searchParams.week || currentWeek.id
 
   return (

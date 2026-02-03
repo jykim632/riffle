@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { WeekOverview } from '@/components/dashboard/week-overview'
 import { CurrentWeekSummaries } from '@/components/dashboard/current-week-summaries'
+import { isCurrentSeasonMember, isAdmin } from '@/lib/utils/season-membership'
+import { NonMemberAlert } from '@/components/season/non-member-alert'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -57,7 +59,11 @@ export default async function DashboardPage() {
     )
   }
 
-  // 4. 내 제출 현황
+  // 4. 멤버십 확인
+  const member = await isCurrentSeasonMember(user.id)
+  const admin = await isAdmin(user.id)
+
+  // 5. 내 제출 현황
   const { data: mySubmission } = await supabase
     .from('summaries')
     .select('created_at')
@@ -65,7 +71,7 @@ export default async function DashboardPage() {
     .eq('author_id', user.id)
     .maybeSingle()
 
-  // 5. 전체 제출 현황
+  // 6. 전체 제출 현황
   const { data: allProfiles } = await supabase
     .from('profiles')
     .select('id, nickname')
@@ -83,7 +89,7 @@ export default async function DashboardPage() {
         allSubmissions?.some((s) => s.author_id === profile.id) ?? false,
     })) ?? []
 
-  // 6. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
+  // 7. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
   const { data: currentWeekSummariesRaw } = await supabase
     .from('first_summaries')
     .select('id, content, created_at, profiles(nickname)')
@@ -101,12 +107,20 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      {/* 비멤버 경고 배너 */}
+      {!admin && !member && (
+        <div className="mb-6">
+          <NonMemberAlert />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         {/* 이번 주 현황 (주차 정보 + 내 제출 + 전체 제출) */}
         <WeekOverview
           week={currentWeek}
           mySubmission={mySubmission}
           allSubmissions={submissionsStatus}
+          isCurrentSeasonMember={admin || member}
         />
 
         {/* 이번 주 요약본 */}

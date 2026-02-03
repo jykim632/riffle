@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Calendar, CheckCircle2, Users } from 'lucide-react'
+import { Calendar, CheckCircle2, Users, Lock } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -23,9 +23,10 @@ interface WeekOverviewProps {
     nickname: string
     has_submitted: boolean
   }>
+  isCurrentSeasonMember: boolean
 }
 
-export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOverviewProps) {
+export function WeekOverview({ week, mySubmission, allSubmissions, isCurrentSeasonMember }: WeekOverviewProps) {
   const hasSubmitted = !!mySubmission
   const totalMembers = allSubmissions.length
   const submittedCount = allSubmissions.filter((s) => s.has_submitted).length
@@ -61,11 +62,20 @@ export function WeekOverview({ week, mySubmission, allSubmissions }: WeekOvervie
               </div>
             </div>
           ) : (
-            <Button asChild className="w-full">
-              <Link href={`/summaries/new?week=${week.id}`}>
-                요약본 제출하기
-              </Link>
-            </Button>
+            <>
+              {isCurrentSeasonMember ? (
+                <Button asChild className="w-full">
+                  <Link href={`/summaries/new?week=${week.id}`}>
+                    요약본 제출하기
+                  </Link>
+                </Button>
+              ) : (
+                <Button disabled className="w-full">
+                  <Lock className="mr-2 h-4 w-4" />
+                  시즌 참여자만 제출 가능
+                </Button>
+              )}
+            </>
           )}
         </div>
 
