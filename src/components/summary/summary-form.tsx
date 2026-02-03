@@ -14,6 +14,13 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,16 +32,26 @@ import {
 } from '@/components/ui/alert-dialog'
 import { SummaryContent } from './summary-content'
 import { createSummary, updateSummary } from '@/actions/summaries'
+import { formatDateRange } from '@/lib/utils/date'
+
+interface Week {
+  id: string
+  week_number: number
+  title: string | null
+  start_date: string
+  end_date: string
+  is_current: boolean
+}
 
 interface SummaryFormProps {
   mode: 'create' | 'edit'
-  weekId?: string
+  weeks: Week[]
+  initialWeekId: string
   summaryId?: string
   initialContent?: string
-  weekTitle?: string
 }
 
-export function SummaryForm({ mode, weekId, summaryId, initialContent = '', weekTitle }: SummaryFormProps) {
+export function SummaryForm({ mode, weeks, initialWeekId, summaryId, initialContent = '' }: SummaryFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [content, setContent] = useState(initialContent)
@@ -46,14 +63,18 @@ export function SummaryForm({ mode, weekId, summaryId, initialContent = '', week
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateSummaryInput | UpdateSummaryInput>({
     resolver: zodResolver(schema),
     defaultValues:
       mode === 'create'
-        ? { weekId, content: initialContent }
-        : { summaryId, content: initialContent },
+        ? { weekId: initialWeekId, content: initialContent }
+        : { summaryId, weekId: initialWeekId, content: initialContent },
   })
+
+  const selectedWeekId = watch('weekId')
 
   const executeSubmit = async (data: CreateSummaryInput | UpdateSummaryInput) => {
     setLoading(true)
@@ -65,6 +86,7 @@ export function SummaryForm({ mode, weekId, summaryId, initialContent = '', week
       formData.append('weekId', (data as CreateSummaryInput).weekId)
     } else {
       formData.append('summaryId', (data as UpdateSummaryInput).summaryId)
+      formData.append('weekId', (data as UpdateSummaryInput).weekId)
     }
 
     formData.append('content', data.content)
@@ -95,6 +117,20 @@ export function SummaryForm({ mode, weekId, summaryId, initialContent = '', week
     }
   }
 
+  const getWeekLabel = (week: Week) => {
+    const dateRange = formatDateRange(week.start_date, week.end_date)
+    const currentLabel = week.is_current ? ' ← 현재' : ''
+    return `${week.week_number}주차 (${dateRange})${currentLabel}`
+  }
+
+  const getWeekTitle = (weekId: string) => {
+    const week = weeks.find(w => w.id === weekId)
+    if (!week) return ''
+    return `${week.week_number}주차`
+  }
+
+  const isWeekChanged = mode === 'edit' && selectedWeekId !== initialWeekId
+
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-2">
@@ -102,7 +138,9 @@ export function SummaryForm({ mode, weekId, summaryId, initialContent = '', week
         <Card>
           <CardHeader>
             <CardTitle>{mode === 'create' ? '요약본 작성' : '요약본 수정'}</CardTitle>
-            {weekTitle && <CardDescription>{weekTitle}</CardDescription>}
+            <CardDescription>
+              {mode === 'create' ? '경제 라디오 요약본을 작성해주세요' : '요약본을 수정하세요'}
+            </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
@@ -112,6 +150,30 @@ export function SummaryForm({ mode, weekId, summaryId, initialContent = '', week
                 </div>
               )}
 
+              {/* 주차 선택 */}
+              <div className="space-y-2">
+                <Label htmlFor="weekId">제출 주차</Label>
+                <Select
+                  value={selectedWeekId}
+                  onValueChange={(value) => setValue('weekId', value)}
+                >
+                  <SelectTrigger id="weekId">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {weeks.map((week) => (
+                      <SelectItem key={week.id} value={week.id}>
+                        {getWeekLabel(week)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.weekId && (
+                  <p className="text-sm text-destructive">{errors.weekId.message}</p>
+                )}
+              </div>
+
+              {/* 내용 입력 */}
               <div className="space-y-2">
                 <Label htmlFor="content">내용 (마크다운 지원)</Label>
                 <Textarea
@@ -162,7 +224,17 @@ export function SummaryForm({ mode, weekId, summaryId, initialContent = '', week
           <AlertDialogHeader>
             <AlertDialogTitle>요약본 수정</AlertDialogTitle>
             <AlertDialogDescription>
-              요약본을 수정하시겠습니까? 수정된 내용은 새로운 버전으로 저장됩니다.
+              {isWeekChanged ? (
+                <>
+                  주차를 변경하고 요약본을 수정하시겠습니까?
+                  <br />
+                  <span className="font-medium">
+                    {getWeekTitle(initialWeekId)} → {getWeekTitle(selectedWeekId)}
+                  </span>
+                </>
+              ) : (
+                '요약본을 수정하시겠습니까? 수정된 내용은 새로운 버전으로 저장됩니다.'
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -56,6 +56,7 @@ export async function createSummary(formData: FormData) {
 export async function updateSummary(formData: FormData) {
   const rawData = {
     summaryId: formData.get('summaryId') as string,
+    weekId: formData.get('weekId') as string,
     content: formData.get('content') as string,
   }
 
@@ -66,13 +67,13 @@ export async function updateSummary(formData: FormData) {
     return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
   }
 
-  const { summaryId, content } = result.data
+  const { summaryId, weekId, content } = result.data
   const supabase = await createClient()
 
   // 요약본 수정 (RLS가 자동으로 본인 확인)
   const { error } = await supabase
     .from('summaries')
-    .update({ content })
+    .update({ content, week_id: weekId })
     .eq('id', summaryId)
 
   if (error) {

@@ -19,10 +19,10 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
     redirect('/login')
   }
 
-  // 2. 요약본 조회 (JOIN: weeks)
+  // 2. 요약본 조회
   const { data: summary, error } = await supabase
     .from('summaries')
-    .select('*, weeks(title)')
+    .select('id, content, week_id, author_id')
     .eq('id', params.id)
     .maybeSingle()
 
@@ -35,8 +35,41 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
     redirect(`/mine/${params.id}`)
   }
 
-  // Supabase JOIN 결과 타입 처리
-  const weeks = Array.isArray(summary.weeks) ? summary.weeks[0] : summary.weeks
+  // 4. 최근 4주 조회
+  const { data: recentWeeks } = await supabase
+    .from('weeks')
+    .select('id, week_number, title, start_date, end_date, is_current')
+    .order('week_number', { ascending: false })
+    .limit(4)
+
+  let weeks = recentWeeks || []
+
+  // 5. 엣지케이스: 현재 week_id가 최근 4주에 없으면 추가 조회
+  const currentWeekId = summary.week_id
+  const isInRecent = weeks.some((w) => w.id === currentWeekId)
+
+  if (!isInRecent) {
+    const { data: currentWeek } = await supabase
+      .from('weeks')
+      .select('id, week_number, title, start_date, end_date, is_current')
+      .eq('id', currentWeekId)
+      .single()
+
+    if (currentWeek) {
+      weeks = [currentWeek, ...weeks]
+    }
+  }
+
+  if (weeks.length === 0) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <h1 className="mb-4 text-2xl font-bold">주차 정보를 불러올 수 없어요</h1>
+          <p className="text-muted-foreground">관리자에게 문의하세요.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -49,9 +82,10 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
 
       <SummaryForm
         mode="edit"
+        weeks={weeks}
+        initialWeekId={summary.week_id}
         summaryId={params.id}
         initialContent={summary.content}
-        weekTitle={weeks?.title}
       />
     </div>
   )
