@@ -176,15 +176,12 @@ CREATE TRIGGER on_auth_user_created
 --   'auto-advance-week',
 --   '0 15 * * 0',
 --   $$
---   -- 주차 전환 (원자적 실행)
---   WITH deactivate AS (
---     UPDATE public.weeks SET is_current = false WHERE is_current = true
---     RETURNING week_number
---   )
+--   UPDATE public.weeks SET is_current = false WHERE is_current = true;
+--
 --   INSERT INTO public.weeks (week_number, title, start_date, end_date, is_current)
 --   SELECT
---     EXTRACT(WEEK FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date),
---     TO_CHAR((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date, 'YYYY"년" MM"월"') || ' ' ||
+--     (SELECT COALESCE(MAX(week_number), 0) FROM public.weeks) + 1,
+--     TO_CHAR((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date, 'YYYY"년" MM"월" ') ||
 --       CEIL(EXTRACT(DAY FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date) / 7.0)::INT || '주차',
 --     (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date,
 --     (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::date + INTERVAL '6 days',

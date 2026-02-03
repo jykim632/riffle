@@ -1,16 +1,3 @@
-import { getISOWeek } from 'date-fns'
-
-/**
- * ISO 8601 주차 번호를 반환합니다. (1-53)
- * @param date - 날짜 문자열 또는 Date 객체
- * @returns ISO 주차 번호 (1-53)
- * @example getISOWeekNumber('2026-02-03') // 6
- */
-export function getISOWeekNumber(date: string | Date): number {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return getISOWeek(d)
-}
-
 /**
  * 날짜 범위를 포맷팅합니다.
  * @param start - 시작 날짜 (YYYY-MM-DD)
