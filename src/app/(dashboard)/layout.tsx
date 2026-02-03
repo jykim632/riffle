@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/header'
 import { redirect } from 'next/navigation'
+import Script from 'next/script'
 
 export default async function DashboardLayout({
   children,
@@ -29,12 +30,22 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  // 현재 주차 조회
-  const { data: currentWeek } = await supabase
-    .from('weeks')
-    .select('week_number, title')
-    .eq('is_current', true)
+  // 현재 시즌 조회
+  const { data: currentSeason } = await supabase
+    .from('seasons')
+    .select('id')
+    .eq('is_active', true)
     .maybeSingle()
+
+  // 현재 주차 조회 (현재 시즌 내)
+  const { data: currentWeek } = currentSeason
+    ? await supabase
+        .from('weeks')
+        .select('week_number, title')
+        .eq('season_id', currentSeason.id)
+        .eq('is_current', true)
+        .maybeSingle()
+    : { data: null }
 
   // 현재 주차가 없으면 기본값 사용
   const weekInfo = currentWeek || {
@@ -43,12 +54,19 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen">
-      <Header
-        currentWeek={weekInfo}
-        user={{ nickname: profile.nickname }}
+    <>
+      <div className="min-h-screen">
+        <Header
+          currentWeek={weekInfo}
+          user={{ nickname: profile.nickname }}
+        />
+        <main className="bg-muted/30">{children}</main>
+      </div>
+      <Script
+        src="https://cdn.sori.life/widget.js"
+        data-project-id="cml769a4xOAUXRQwhpic"
+        strategy="afterInteractive"
       />
-      <main className="bg-muted/30">{children}</main>
-    </div>
+    </>
   )
 }

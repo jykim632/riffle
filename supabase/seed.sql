@@ -2,21 +2,40 @@
 -- 개발 환경용 초기 데이터
 
 -- ============================================================================
--- 1. 첫 주차 생성
+-- 1. 시즌 생성 (2026년 1분기: 3개월)
 -- ============================================================================
 
-INSERT INTO public.weeks (week_number, title, start_date, end_date, is_current)
+INSERT INTO public.seasons (id, name, start_date, end_date, is_active)
 VALUES (
-  1,
-  '2026년 2월 1주차',
-  '2026-02-03',
-  '2026-02-09',
+  'V1StGXR8',  -- nanoid(8) 고정값
+  '2026년 1분기',
+  '2026-01-06',
+  '2026-04-05',  -- 3개월 (약 13주)
   true
 )
-ON CONFLICT (week_number) DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
--- 2. 테스트 사용자 프로필 (auth.users는 Supabase Auth에서 관리)
+-- 2. 주차 생성 (시즌 포함)
+-- ============================================================================
+
+INSERT INTO public.weeks (id, season_id, week_number, title, start_date, end_date, is_current)
+VALUES
+  ('abc12345', 'V1StGXR8', 1, '1주차', '2026-02-03', '2026-02-09', true),
+  ('def67890', 'V1StGXR8', 2, '2주차', '2026-02-10', '2026-02-16', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- 3. 시즌 멤버 추가 (사용자가 이미 있는 경우)
+-- ============================================================================
+
+-- 참고: 실제 사용자가 있을 때만 실행
+-- INSERT INTO public.season_members (season_id, user_id)
+-- SELECT 'V1StGXR8', id FROM public.profiles
+-- ON CONFLICT (season_id, user_id) DO NOTHING;
+
+-- ============================================================================
+-- 4. 테스트 사용자 프로필 (auth.users는 Supabase Auth에서 관리)
 -- ============================================================================
 
 -- 참고: 실제 사용자는 Supabase Auth의 signUp API로 생성해야 함
@@ -61,12 +80,12 @@ ON CONFLICT (week_number) DO NOTHING;
 -- ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================================
--- 4. 샘플 요약본 (테스트용)
+-- 5. 샘플 요약본 (테스트용)
 -- ============================================================================
 
 -- INSERT INTO public.summaries (week_id, author_id, content)
--- SELECT
---   w.id,
+-- VALUES (
+--   'abc12345',  -- 1주차 ID
 --   '00000000-0000-0000-0000-000000000002'::uuid,  -- 김철수
 --   '# 이번 주 경제 뉴스 요약
 --
@@ -76,8 +95,7 @@ ON CONFLICT (week_number) DO NOTHING;
 --
 -- ## 분석
 -- 중앙은행의 금리 동결 결정은...'
--- FROM public.weeks w
--- WHERE w.week_number = 1
+-- )
 -- ON CONFLICT DO NOTHING;
 
 -- ============================================================================

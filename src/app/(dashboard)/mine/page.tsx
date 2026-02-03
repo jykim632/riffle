@@ -22,13 +22,23 @@ export default async function MySummariesPage(props: { searchParams: Promise<Sea
     redirect('/login')
   }
 
-  // 2. 주차 목록 조회 (필터용)
-  const { data: weeks } = await supabase
-    .from('weeks')
-    .select('id, week_number, title')
-    .order('week_number', { ascending: false })
+  // 2. 현재 시즌 조회
+  const { data: currentSeason } = await supabase
+    .from('seasons')
+    .select('id')
+    .eq('is_active', true)
+    .maybeSingle()
 
-  // 3. 내 요약본 목록 조회 (author_id 필터 추가)
+  // 3. 주차 목록 조회 (필터용, 현재 시즌만)
+  const { data: weeks } = currentSeason
+    ? await supabase
+        .from('weeks')
+        .select('id, season_id, week_number, title')
+        .eq('season_id', currentSeason.id)
+        .order('week_number', { ascending: false })
+    : { data: [] }
+
+  // 4. 내 요약본 목록 조회 (author_id 필터 추가)
   let query = supabase
     .from('latest_summaries')
     .select('*, weeks(week_number, title), profiles(nickname)')

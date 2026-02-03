@@ -35,23 +35,42 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
     redirect(`/mine/${params.id}`)
   }
 
-  // 4. 최근 4주 조회
+  // 4. 현재 시즌 확인
+  const { data: currentSeason } = await supabase
+    .from('seasons')
+    .select('id')
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (!currentSeason) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <h1 className="mb-4 text-2xl font-bold">현재 시즌이 없어요</h1>
+          <p className="text-muted-foreground">관리자에게 시즌 생성을 요청하세요.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 5. 최근 4주 조회 (현재 시즌만)
   const { data: recentWeeks } = await supabase
     .from('weeks')
-    .select('id, week_number, title, start_date, end_date, is_current')
+    .select('id, season_id, week_number, title, start_date, end_date, is_current')
+    .eq('season_id', currentSeason.id)
     .order('week_number', { ascending: false })
     .limit(4)
 
   let weeks = recentWeeks || []
 
-  // 5. 엣지케이스: 현재 week_id가 최근 4주에 없으면 추가 조회
+  // 6. 엣지케이스: 현재 week_id가 최근 4주에 없으면 추가 조회 (다른 시즌 주차일 수도 있음)
   const currentWeekId = summary.week_id
   const isInRecent = weeks.some((w) => w.id === currentWeekId)
 
   if (!isInRecent) {
     const { data: currentWeek } = await supabase
       .from('weeks')
-      .select('id, week_number, title, start_date, end_date, is_current')
+      .select('id, season_id, week_number, title, start_date, end_date, is_current')
       .eq('id', currentWeekId)
       .single()
 

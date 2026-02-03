@@ -58,9 +58,56 @@ export interface Database {
           used_at?: string | null
         }
       }
+      seasons: {
+        Row: {
+          id: string
+          name: string
+          start_date: string
+          end_date: string
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          start_date: string
+          end_date: string
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          start_date?: string
+          end_date?: string
+          is_active?: boolean
+          created_at?: string
+        }
+      }
+      season_members: {
+        Row: {
+          id: string
+          season_id: string
+          user_id: string
+          joined_at: string
+        }
+        Insert: {
+          id?: string
+          season_id: string
+          user_id: string
+          joined_at?: string
+        }
+        Update: {
+          id?: string
+          season_id?: string
+          user_id?: string
+          joined_at?: string
+        }
+      }
       weeks: {
         Row: {
           id: string
+          season_id: string
           week_number: number
           title: string | null
           start_date: string
@@ -69,7 +116,8 @@ export interface Database {
           created_at: string
         }
         Insert: {
-          id?: string
+          id: string
+          season_id: string
           week_number: number
           title?: string | null
           start_date: string
@@ -79,6 +127,7 @@ export interface Database {
         }
         Update: {
           id?: string
+          season_id?: string
           week_number?: number
           title?: string | null
           start_date?: string
@@ -116,6 +165,16 @@ export interface Database {
     }
     Views: {
       latest_summaries: {
+        Row: {
+          id: string
+          week_id: string
+          author_id: string
+          content: string
+          created_at: string
+          updated_at: string
+        }
+      }
+      first_summaries: {
         Row: {
           id: string
           week_id: string

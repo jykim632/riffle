@@ -15,10 +15,31 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // 2. 현재 주차 조회
+  // 2. 현재 시즌 조회
+  const { data: currentSeason } = await supabase
+    .from('seasons')
+    .select('*')
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (!currentSeason) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <h1 className="mb-4 text-2xl font-bold">현재 시즌이 없어요</h1>
+          <p className="text-muted-foreground">
+            관리자에게 시즌 생성을 요청하세요.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // 3. 현재 주차 조회 (현재 시즌 내)
   const { data: currentWeek } = await supabase
     .from('weeks')
     .select('*')
+    .eq('season_id', currentSeason.id)
     .eq('is_current', true)
     .maybeSingle()
 
@@ -36,7 +57,7 @@ export default async function DashboardPage() {
     )
   }
 
-  // 3. 내 제출 현황
+  // 4. 내 제출 현황
   const { data: mySubmission } = await supabase
     .from('summaries')
     .select('created_at')
@@ -44,7 +65,7 @@ export default async function DashboardPage() {
     .eq('author_id', user.id)
     .maybeSingle()
 
-  // 4. 전체 제출 현황
+  // 5. 전체 제출 현황
   const { data: allProfiles } = await supabase
     .from('profiles')
     .select('id, nickname')
@@ -62,7 +83,7 @@ export default async function DashboardPage() {
         allSubmissions?.some((s) => s.author_id === profile.id) ?? false,
     })) ?? []
 
-  // 5. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
+  // 6. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
   const { data: currentWeekSummariesRaw } = await supabase
     .from('first_summaries')
     .select('id, content, created_at, profiles(nickname)')
