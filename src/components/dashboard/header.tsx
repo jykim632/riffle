@@ -34,7 +34,13 @@ export function Header({ currentWeek, user }: HeaderProps) {
             href="/summaries"
             className="transition-colors hover:text-primary"
           >
-            요약본
+            게시판
+          </Link>
+          <Link
+            href="/mine"
+            className="transition-colors hover:text-primary"
+          >
+            내 제출
           </Link>
         </nav>
 

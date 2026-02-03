@@ -5,12 +5,13 @@ import { ChevronLeft } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SummaryContent } from '@/components/summary/summary-content'
+import { SummaryActions } from '@/components/summary/summary-actions'
 
 interface Params {
   id: string
 }
 
-export default async function SummaryDetailPage(props: { params: Promise<Params> }) {
+export default async function MySummaryDetailPage(props: { params: Promise<Params> }) {
   const params = await props.params
   const supabase = await createClient()
 
@@ -34,11 +35,16 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
     notFound()
   }
 
+  // 3. 권한 검증: 본인 것이 아니면 읽기 전용 경로로 리다이렉트
+  if (summary.author_id !== user.id) {
+    redirect(`/summaries/${params.id}`)
+  }
+
   // Supabase JOIN 결과 타입 처리
   const weeks = Array.isArray(summary.weeks) ? summary.weeks[0] : summary.weeks
   const profiles = Array.isArray(summary.profiles) ? summary.profiles[0] : summary.profiles
 
-  // 3. 같은 작성자의 같은 주차 모든 버전 조회
+  // 4. 같은 작성자의 같은 주차 모든 버전 조회
   const { data: allVersions } = await supabase
     .from('summaries')
     .select('id, created_at')
@@ -53,14 +59,18 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
       {/* 페이지 헤더 */}
       <div className="mb-6">
         <Button asChild variant="ghost" size="sm" className="mb-4">
-          <Link href="/summaries">
+          <Link href="/mine">
             <ChevronLeft className="h-4 w-4 mr-1" />
             뒤로가기
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">
-          {weeks?.title || `${weeks?.week_number}주차`}
-        </h1>
+        <div className="flex items-start justify-between">
+          <h1 className="text-3xl font-bold">
+            {weeks?.title || `${weeks?.week_number}주차`}
+          </h1>
+          {/* mine 경로에서는 무조건 Actions 표시 */}
+          <SummaryActions summaryId={params.id} isAuthor={true} />
+        </div>
       </div>
 
       <Card>
@@ -84,7 +94,8 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
                       variant={isCurrentVersion ? 'default' : 'outline'}
                       size="sm"
                     >
-                      <Link href={`/summaries/${version.id}`}>
+                      {/* mine 경로에서는 버전도 mine 경로로 */}
+                      <Link href={`/mine/${version.id}`}>
                         {index + 1}차 제출
                         {index === allVersions.length - 1 && ' (최신)'}
                       </Link>

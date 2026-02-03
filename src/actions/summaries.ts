@@ -49,7 +49,7 @@ export async function createSummary(formData: FormData) {
     return { error: '요약본 제출에 실패했습니다.' }
   }
 
-  redirect(`/summaries/${data.id}`)
+  redirect(`/mine/${data.id}`)
 }
 
 // 요약본 수정
@@ -79,7 +79,7 @@ export async function updateSummary(formData: FormData) {
     return { error: '요약본 수정에 실패했습니다.' }
   }
 
-  redirect(`/summaries/${summaryId}`)
+  redirect(`/mine/${summaryId}`)
 }
 
 // 요약본 삭제
@@ -105,5 +105,5 @@ export async function deleteSummary(formData: FormData) {
     return { error: '요약본 삭제에 실패했습니다.' }
   }
 
-  redirect('/summaries')
+  redirect('/mine')
 }

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -8,7 +9,7 @@ interface SearchParams {
   week?: string
 }
 
-export default async function SummariesPage(props: { searchParams: Promise<SearchParams> }) {
+export default async function MySummariesPage(props: { searchParams: Promise<SearchParams> }) {
   const searchParams = await props.searchParams
   const supabase = await createClient()
 
@@ -27,10 +28,11 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
     .select('id, week_number, title')
     .order('week_number', { ascending: false })
 
-  // 3. 요약본 목록 조회 (latest_summaries 뷰 사용)
+  // 3. 내 요약본 목록 조회 (author_id 필터 추가)
   let query = supabase
     .from('latest_summaries')
     .select('*, weeks(week_number, title), profiles(nickname)')
+    .eq('author_id', user.id)
 
   // 주차 필터링
   if (searchParams.week) {
@@ -55,11 +57,18 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mb-6 sm:mb-8">
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">요약본 목록</h1>
-          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-            멤버들이 제출한 경제 라디오 요약본을 확인하세요
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold sm:text-3xl">내 요약본 목록</h1>
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+              제출한 경제 라디오 요약본을 관리하세요
+            </p>
+          </div>
+          <Button asChild size="icon" className="shrink-0">
+            <Link href="/summaries/new">
+              <Pencil className="h-5 w-5" />
+            </Link>
+          </Button>
         </div>
 
         {/* 주차 필터 */}
@@ -70,7 +79,7 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
               variant={!searchParams.week ? 'default' : 'outline'}
               size="sm"
             >
-              <Link href="/summaries">전체</Link>
+              <Link href="/mine">전체</Link>
             </Button>
             {weeks.map((week) => (
               <Button
@@ -79,7 +88,7 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
                 variant={searchParams.week === week.id ? 'default' : 'outline'}
                 size="sm"
               >
-                <Link href={`/summaries?week=${week.id}`}>
+                <Link href={`/mine?week=${week.id}`}>
                   {week.week_number}주차
                 </Link>
               </Button>
@@ -92,7 +101,7 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
       {summaries && summaries.length > 0 ? (
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {summaries.map((summary) => (
-            <Link key={summary.id} href={`/summaries/${summary.id}`}>
+            <Link key={summary.id} href={`/mine/${summary.id}`}>
               <Card className="h-full transition-shadow hover:shadow-md">
                 <CardHeader>
                   <CardTitle className="text-lg">
@@ -116,9 +125,12 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
       ) : (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <h2 className="mb-4 text-xl font-semibold">요약본이 없어요</h2>
-          <p className="text-muted-foreground">
-            멤버들의 요약본을 기다리고 있어요
+          <p className="mb-6 text-muted-foreground">
+            첫 번째 요약본을 작성해보세요!
           </p>
+          <Button asChild>
+            <Link href="/summaries/new">요약본 작성하기</Link>
+          </Button>
         </div>
       )}
     </div>

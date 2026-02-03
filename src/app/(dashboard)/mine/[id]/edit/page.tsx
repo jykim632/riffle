@@ -6,7 +6,7 @@ interface Params {
   id: string
 }
 
-export default async function EditSummaryPage(props: { params: Promise<Params> }) {
+export default async function EditMySummaryPage(props: { params: Promise<Params> }) {
   const params = await props.params
   const supabase = await createClient()
 
