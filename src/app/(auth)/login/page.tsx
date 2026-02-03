@@ -147,7 +147,17 @@ export default function LoginPage() {
             type="button"
             variant="outline"
             className="w-full h-10 text-sm font-medium border-2 hover:bg-muted/50 hover:border-muted-foreground/40 transition-all duration-200"
-            onClick={() => router.push('/google')}
+            onClick={async () => {
+              const { createClient } = await import('@/lib/supabase/client')
+              const supabase = createClient()
+              const origin = window.location.origin
+              await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                  redirectTo: `${origin}/auth/callback`,
+                },
+              })
+            }}
             disabled={loading}
           >
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">

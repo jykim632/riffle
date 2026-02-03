@@ -83,10 +83,10 @@ export async function GET(request: NextRequest) {
         // 로그만 남기고 진행
       }
     } else if (!profile && !inviteCode) {
-      // 신규 사용자인데 초대 코드 없음
+      // 신규 사용자인데 초대 코드 없음 - 회원가입 페이지로 안내
       await supabase.auth.signOut()
       return NextResponse.redirect(
-        `${requestUrl.origin}/google?error=${encodeURIComponent('초대 코드가 필요합니다.')}`
+        `${requestUrl.origin}/signup?error=${encodeURIComponent('회원가입이 필요합니다. 초대 코드를 입력해주세요.')}`
       )
     }
 
