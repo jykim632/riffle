@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -8,14 +8,17 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginInput } from '@/lib/schemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { login } from '@/actions/auth'
+import { Loader2, AlertCircle, Mail, Lock } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const emailInputRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
@@ -24,6 +27,10 @@ export default function LoginPage() {
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   })
+
+  useEffect(() => {
+    emailInputRef.current?.focus()
+  }, [])
 
   const onSubmit = async (data: LoginInput) => {
     setLoading(true)
@@ -44,67 +51,102 @@ export default function LoginPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">로그인</CardTitle>
-        <CardDescription>
+    <Card className="border-2 shadow-xl backdrop-blur-sm bg-background/95">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="text-2xl font-bold tracking-tight">로그인</CardTitle>
+        <CardDescription className="text-sm">
           Riffle 경제 스터디에 오신 것을 환영합니다
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-              {error}
+            <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20 animate-in fade-in slide-in-from-top-1 duration-300">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">이메일</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="your@email.com"
-              {...register('email')}
-              disabled={loading}
-            />
+            <Label htmlFor="email" className="text-xs font-semibold text-foreground/90">
+              이메일
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                {...register('email')}
+                ref={(e) => {
+                  register('email').ref(e)
+                  emailInputRef.current = e
+                }}
+                disabled={loading}
+                autoComplete="email"
+                className="h-10 pl-9 text-sm bg-muted/50 border-2 focus-visible:bg-background transition-colors"
+              />
+            </div>
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p className="text-xs text-destructive flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                <AlertCircle className="h-3 w-3" />
+                {errors.email.message}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">비밀번호</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              {...register('password')}
-              disabled={loading}
-            />
+            <Label htmlFor="password" className="text-xs font-semibold text-foreground/90">
+              비밀번호
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+              <PasswordInput
+                id="password"
+                placeholder="••••••••"
+                {...register('password')}
+                disabled={loading}
+                autoComplete="current-password"
+                className="h-10 pl-9 text-sm bg-muted/50 border-2 focus-visible:bg-background transition-colors"
+              />
+            </div>
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-xs text-destructive flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                <AlertCircle className="h-3 w-3" />
+                {errors.password.message}
+              </p>
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? '로그인 중...' : '로그인'}
+        <CardFooter className="flex flex-col space-y-3 pt-2">
+          <Button
+            type="submit"
+            className="w-full h-10 text-sm font-semibold bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 shadow-lg shadow-blue-500/20 transition-all duration-200"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                로그인 중...
+              </>
+            ) : (
+              '로그인'
+            )}
           </Button>
 
-          <div className="relative">
+          <div className="relative w-full">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-muted-foreground/20" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">또는</span>
+              <span className="bg-background px-3 text-muted-foreground font-medium">또는</span>
             </div>
           </div>
 
           <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="w-full h-10 text-sm font-medium border-2 hover:bg-muted/50 hover:border-muted-foreground/40 transition-all duration-200"
             onClick={() => router.push('/google')}
             disabled={loading}
           >
@@ -129,9 +171,9 @@ export default function LoginPage() {
             Google로 로그인
           </Button>
 
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-xs text-muted-foreground text-center pt-1">
             계정이 없으신가요?{' '}
-            <Link href="/signup" className="text-primary hover:underline">
+            <Link href="/signup" className="text-primary hover:text-primary/80 underline-offset-4 hover:underline font-semibold transition-colors">
               회원가입
             </Link>
           </p>

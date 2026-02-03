@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -8,14 +8,17 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { signupSchema, type SignupInput } from '@/lib/schemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { signup } from '@/actions/auth'
+import { Loader2, AlertCircle, Mail, Lock, User, Ticket } from 'lucide-react'
 
 export default function SignupPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const inviteCodeInputRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
@@ -24,6 +27,10 @@ export default function SignupPage() {
   } = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
   })
+
+  useEffect(() => {
+    inviteCodeInputRef.current?.focus()
+  }, [])
 
   const onSubmit = async (data: SignupInput) => {
     setLoading(true)
@@ -46,101 +53,155 @@ export default function SignupPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">회원가입</CardTitle>
-        <CardDescription>
+    <Card className="border-2 shadow-xl backdrop-blur-sm bg-background/95">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="text-2xl font-bold tracking-tight">회원가입</CardTitle>
+        <CardDescription className="text-sm">
           초대 코드를 입력하여 경제 스터디에 참여하세요
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-              {error}
+            <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20 animate-in fade-in slide-in-from-top-1 duration-300">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="inviteCode">초대 코드</Label>
-            <Input
-              id="inviteCode"
-              type="text"
-              placeholder="8자리 초대 코드"
-              maxLength={8}
-              {...register('inviteCode')}
-              disabled={loading}
-              className="uppercase"
-            />
+            <Label htmlFor="inviteCode" className="text-xs font-semibold text-foreground/90">
+              초대 코드
+            </Label>
+            <div className="relative">
+              <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="inviteCode"
+                type="text"
+                placeholder="8자리 초대 코드"
+                maxLength={8}
+                {...register('inviteCode')}
+                ref={(e) => {
+                  register('inviteCode').ref(e)
+                  inviteCodeInputRef.current = e
+                }}
+                disabled={loading}
+                className="h-10 pl-9 text-sm bg-muted/50 border-2 focus-visible:bg-background transition-colors uppercase"
+                autoComplete="off"
+              />
+            </div>
             {errors.inviteCode && (
-              <p className="text-sm text-destructive">{errors.inviteCode.message}</p>
+              <p className="text-xs text-destructive flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                <AlertCircle className="h-3 w-3" />
+                {errors.inviteCode.message}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nickname">닉네임</Label>
-            <Input
-              id="nickname"
-              type="text"
-              placeholder="홍길동"
-              maxLength={20}
-              {...register('nickname')}
-              disabled={loading}
-            />
+            <Label htmlFor="nickname" className="text-xs font-semibold text-foreground/90">
+              닉네임
+            </Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="nickname"
+                type="text"
+                placeholder="홍길동"
+                maxLength={20}
+                {...register('nickname')}
+                disabled={loading}
+                autoComplete="nickname"
+                className="h-10 pl-9 text-sm bg-muted/50 border-2 focus-visible:bg-background transition-colors"
+              />
+            </div>
             {errors.nickname && (
-              <p className="text-sm text-destructive">{errors.nickname.message}</p>
+              <p className="text-xs text-destructive flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                <AlertCircle className="h-3 w-3" />
+                {errors.nickname.message}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">이메일</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="your@email.com"
-              {...register('email')}
-              disabled={loading}
-            />
+            <Label htmlFor="email" className="text-xs font-semibold text-foreground/90">
+              이메일
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                {...register('email')}
+                disabled={loading}
+                autoComplete="email"
+                className="h-10 pl-9 text-sm bg-muted/50 border-2 focus-visible:bg-background transition-colors"
+              />
+            </div>
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p className="text-xs text-destructive flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                <AlertCircle className="h-3 w-3" />
+                {errors.email.message}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">비밀번호</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="6자 이상"
-              {...register('password')}
-              disabled={loading}
-            />
+            <Label htmlFor="password" className="text-xs font-semibold text-foreground/90">
+              비밀번호
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+              <PasswordInput
+                id="password"
+                placeholder="6자 이상"
+                {...register('password')}
+                disabled={loading}
+                autoComplete="new-password"
+                className="h-10 pl-9 text-sm bg-muted/50 border-2 focus-visible:bg-background transition-colors"
+              />
+            </div>
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-xs text-destructive flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                <AlertCircle className="h-3 w-3" />
+                {errors.password.message}
+              </p>
             )}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground pl-1">
               비밀번호는 최소 6자 이상이어야 합니다
             </p>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? '가입 중...' : '회원가입'}
+        <CardFooter className="flex flex-col space-y-3 pt-2">
+          <Button
+            type="submit"
+            className="w-full h-10 text-sm font-semibold bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 shadow-lg shadow-blue-500/20 transition-all duration-200"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                가입 중...
+              </>
+            ) : (
+              '회원가입'
+            )}
           </Button>
 
-          <div className="relative">
+          <div className="relative w-full">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-muted-foreground/20" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">또는</span>
+              <span className="bg-background px-3 text-muted-foreground font-medium">또는</span>
             </div>
           </div>
 
           <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="w-full h-10 text-sm font-medium border-2 hover:bg-muted/50 hover:border-muted-foreground/40 transition-all duration-200"
             onClick={() => router.push('/google')}
             disabled={loading}
           >
@@ -165,9 +226,9 @@ export default function SignupPage() {
             Google로 가입
           </Button>
 
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-xs text-muted-foreground text-center pt-1">
             이미 계정이 있으신가요?{' '}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href="/login" className="text-primary hover:text-primary/80 underline-offset-4 hover:underline font-semibold transition-colors">
               로그인
             </Link>
           </p>
