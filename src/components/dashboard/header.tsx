@@ -11,9 +11,10 @@ interface HeaderProps {
   user: {
     nickname: string
   }
+  isAdmin?: boolean
 }
 
-export function Header({ currentWeek, user }: HeaderProps) {
+export function Header({ currentWeek, user, isAdmin = false }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
@@ -42,6 +43,14 @@ export function Header({ currentWeek, user }: HeaderProps) {
           >
             내 제출
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin/seasons"
+              className="transition-colors hover:text-primary"
+            >
+              관리자
+            </Link>
+          )}
         </nav>
 
         {/* 우측 영역 */}

@@ -22,7 +22,7 @@ export default async function DashboardLayout({
   // 사용자 프로필 조회
   const { data: profile } = await supabase
     .from('profiles')
-    .select('nickname')
+    .select('nickname, role')
     .eq('id', user.id)
     .single()
 
@@ -59,6 +59,7 @@ export default async function DashboardLayout({
         <Header
           currentWeek={weekInfo}
           user={{ nickname: profile.nickname }}
+          isAdmin={profile.role === 'admin'}
         />
         <main className="bg-muted/30">{children}</main>
       </div>
