@@ -16,3 +16,6 @@ export const nanoid = customAlphabet(
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
   12
 )
+
+// 초대 코드 (8자, 대문자+숫자만 - 가독성)
+export const inviteCode = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 8)
