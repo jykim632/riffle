@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useRef, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,10 +12,12 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { login } from '@/actions/auth'
-import { Loader2, AlertCircle, Mail, Lock } from 'lucide-react'
+import { Loader2, AlertCircle, Mail, Lock, CheckCircle2 } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const message = searchParams.get('message')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const emailInputRef = useRef<HTMLInputElement>(null)
@@ -60,6 +62,13 @@ export default function LoginPage() {
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
+          {message && (
+            <div className="flex items-center gap-2 p-3 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-900 animate-in fade-in slide-in-from-top-1 duration-300">
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+              <span>{message}</span>
+            </div>
+          )}
+
           {error && (
             <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20 animate-in fade-in slide-in-from-top-1 duration-300">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -116,6 +125,14 @@ export default function LoginPage() {
                 {errors.password.message}
               </p>
             )}
+            <div className="flex justify-end">
+              <Link
+                href="/reset-password"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                비밀번호를 잊으셨나요?
+              </Link>
+            </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-3 pt-2">
@@ -190,5 +207,13 @@ export default function LoginPage() {
         </CardFooter>
       </form>
     </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

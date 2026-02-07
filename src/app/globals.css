@@ -124,3 +124,48 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* @uiw/react-md-editor - shadcn 테마 통합 */
+.w-md-editor {
+  --color-border-default: var(--border) !important;
+  --color-fg-default: var(--foreground) !important;
+  --color-canvas-default: var(--card) !important;
+  --color-canvas-subtle: var(--muted) !important;
+  border-radius: var(--radius) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+.w-md-editor:focus-within {
+  border-color: var(--ring) !important;
+  box-shadow: 0 0 0 2px oklch(from var(--ring) l c h / 0.2) !important;
+}
+
+.w-md-editor-toolbar {
+  border-bottom-color: var(--border) !important;
+  background-color: var(--muted) !important;
+  border-radius: var(--radius) var(--radius) 0 0 !important;
+}
+
+.w-md-editor-toolbar li > button {
+  color: var(--muted-foreground) !important;
+}
+
+.w-md-editor-toolbar li > button:hover {
+  color: var(--foreground) !important;
+  background-color: var(--accent) !important;
+}
+
+.w-md-editor-toolbar li.active > button {
+  color: var(--foreground) !important;
+}
+
+.w-md-editor-text-input {
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+.w-md-editor-text-pre,
+.w-md-editor-text-input {
+  font-family: var(--font-mono), ui-monospace, monospace !important;
+}

@@ -11,7 +11,7 @@ import {
 } from '@/lib/schemas/summary'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { MarkdownEditor } from './markdown-editor'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -61,7 +61,6 @@ export function SummaryForm({ mode, weeks, initialWeekId, summaryId, initialCont
   const schema = mode === 'create' ? createSummarySchema : updateSummarySchema
 
   const {
-    register,
     handleSubmit,
     watch,
     setValue,
@@ -175,15 +174,14 @@ export function SummaryForm({ mode, weeks, initialWeekId, summaryId, initialCont
 
               {/* 내용 입력 */}
               <div className="space-y-2">
-                <Label htmlFor="content">내용 (마크다운 지원)</Label>
-                <Textarea
-                  id="content"
-                  rows={20}
-                  placeholder="# 제목&#10;&#10;**볼드**, *이탤릭*, [링크](https://example.com)&#10;&#10;- 리스트 항목&#10;- 리스트 항목"
-                  {...register('content')}
+                <Label>내용 (마크다운 지원)</Label>
+                <MarkdownEditor
+                  value={content}
+                  onChange={(val) => {
+                    setContent(val)
+                    setValue('content', val, { shouldValidate: true })
+                  }}
                   disabled={loading}
-                  className="font-mono text-sm"
-                  onChange={(e) => setContent(e.target.value)}
                 />
                 {errors.content && (
                   <p className="text-sm text-destructive">{errors.content.message}</p>
