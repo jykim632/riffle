@@ -28,3 +28,26 @@ export const signupSchema = z.object({
 })
 
 export type SignupInput = z.infer<typeof signupSchema>
+
+// 비밀번호 초기화 요청 스키마
+export const resetRequestSchema = z.object({
+  email: z.string().email('유효한 이메일을 입력해주세요'),
+})
+
+export type ResetRequestInput = z.infer<typeof resetRequestSchema>
+
+// 새 비밀번호 설정 스키마
+export const updatePasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, '비밀번호는 최소 8자 이상이어야 합니다')
+      .max(100, '비밀번호는 100자 이하여야 합니다'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: '비밀번호가 일치하지 않습니다',
+    path: ['confirmPassword'],
+  })
+
+export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>
