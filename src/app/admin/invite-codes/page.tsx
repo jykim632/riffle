@@ -12,37 +12,29 @@ export default async function InviteCodesPage() {
     .select('id, code, is_used, created_at, used_at, created_by, used_by')
     .order('created_at', { ascending: false })
 
-  // 생성자/사용자 닉네임 조회
-  const codesWithNicknames = await Promise.all(
-    (codes || []).map(async (code) => {
-      let created_by_nickname: string | null = null
-      let used_by_nickname: string | null = null
+  // 관련 사용자 ID 수집 → 일괄 프로필 조회 (N+1 → 2 쿼리)
+  const userIds = new Set<string>()
+  for (const code of codes || []) {
+    if (code.created_by) userIds.add(code.created_by)
+    if (code.used_by) userIds.add(code.used_by)
+  }
 
-      if (code.created_by) {
-        const { data: creator } = await supabase
-          .from('profiles')
-          .select('nickname')
-          .eq('id', code.created_by)
-          .single()
-        created_by_nickname = creator?.nickname || null
-      }
+  const nicknameMap = new Map<string, string>()
+  if (userIds.size > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, nickname')
+      .in('id', [...userIds])
+    for (const p of profiles || []) {
+      nicknameMap.set(p.id, p.nickname)
+    }
+  }
 
-      if (code.used_by) {
-        const { data: user } = await supabase
-          .from('profiles')
-          .select('nickname')
-          .eq('id', code.used_by)
-          .single()
-        used_by_nickname = user?.nickname || null
-      }
-
-      return {
-        ...code,
-        created_by_nickname,
-        used_by_nickname,
-      }
-    })
-  )
+  const codesWithNicknames = (codes || []).map((code) => ({
+    ...code,
+    created_by_nickname: code.created_by ? nicknameMap.get(code.created_by) ?? null : null,
+    used_by_nickname: code.used_by ? nicknameMap.get(code.used_by) ?? null : null,
+  }))
 
   // 통계
   const total = codesWithNicknames.length

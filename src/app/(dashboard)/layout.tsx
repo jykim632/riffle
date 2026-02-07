@@ -67,6 +67,8 @@ export default async function DashboardLayout({
         src="https://cdn.sori.life/widget.js"
         data-project-id="cml769a4xOAUXRQwhpic"
         strategy="afterInteractive"
+        integrity="sha384-fI8F8Oi5GKR07EX91Z+fZLBNZPTO6jbWxclju9PsPTqNjqnj1MGpSeAr9MEA9W7o"
+        crossOrigin="anonymous"
       />
     </>
   )

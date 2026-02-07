@@ -1,9 +1,18 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { loginSchema, signupSchema } from '@/lib/schemas'
+import { rateLimit } from '@/lib/rate-limit'
+
+const RATE_LIMIT_ERROR = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
+
+async function getClientIp(): Promise<string> {
+  const h = await headers()
+  return h.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+}
 
 // 로그인
 export async function login(formData: FormData) {
@@ -42,6 +51,11 @@ export async function logout() {
 
 // 회원가입
 export async function signup(formData: FormData) {
+  const ip = await getClientIp()
+  if (rateLimit(`signup:${ip}`, { limit: 5, windowMs: 60_000 }).limited) {
+    return { error: RATE_LIMIT_ERROR }
+  }
+
   const rawData = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
