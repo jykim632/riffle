@@ -40,6 +40,9 @@ yarn-error.log*
 # beads issue tracker
 .beads/
 
+# sentry
+.sentryclirc
+
 # vercel
 .vercel
 
