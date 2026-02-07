@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -42,13 +42,7 @@ export function ManageMembersDialog({
   const [loading, setLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (open) {
-      loadMembers()
-    }
-  }, [open, seasonId])
-
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     setLoading(true)
     try {
       const supabase = createClient()
@@ -69,12 +63,18 @@ export function ManageMembersDialog({
       setSeasonMemberIds(
         new Set((seasonMembers || []).map((sm) => sm.user_id))
       )
-    } catch (error) {
+    } catch {
       alert('멤버 목록 로드 실패')
     } finally {
       setLoading(false)
     }
-  }
+  }, [seasonId])
+
+  useEffect(() => {
+    if (open) {
+      loadMembers()
+    }
+  }, [open, loadMembers])
 
   const handleToggleMember = (userId: string) => {
     setSeasonMemberIds((prev) => {
@@ -132,7 +132,7 @@ export function ManageMembersDialog({
       }
 
       setOpen(false)
-    } catch (error) {
+    } catch {
       alert('멤버 관리 중 오류 발생')
     } finally {
       setIsSubmitting(false)

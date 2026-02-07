@@ -78,7 +78,7 @@ export function CreateSeasonDialog({ children }: CreateSeasonDialogProps) {
       } else {
         alert(`시즌 생성 실패: ${result.error}`)
       }
-    } catch (error) {
+    } catch {
       alert('시즌 생성 중 오류 발생')
     } finally {
       setIsSubmitting(false)

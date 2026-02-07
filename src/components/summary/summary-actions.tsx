@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -24,7 +23,6 @@ interface SummaryActionsProps {
 }
 
 export function SummaryActions({ summaryId, isAuthor }: SummaryActionsProps) {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
 

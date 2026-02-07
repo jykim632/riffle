@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 신규 사용자 확인 (profiles 테이블 조회)
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('id')
       .eq('id', data.user.id)

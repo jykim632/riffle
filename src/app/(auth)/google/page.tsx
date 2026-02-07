@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, Suspense, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, Suspense, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -24,23 +24,13 @@ const inviteCodeSchema = z.object({
 type InviteCodeInput = z.infer<typeof inviteCodeSchema>
 
 function GoogleLoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const [error, setError] = useState<string | null>(null)
+  const errorParam = searchParams.get('error')
+  const [error, setError] = useState<string | null>(
+    errorParam ? decodeURIComponent(errorParam) : null
+  )
   const [loading, setLoading] = useState(false)
   const inviteCodeInputRef = useRef<HTMLInputElement>(null)
-
-  // URL 쿼리 파라미터에서 에러 메시지 읽기
-  useEffect(() => {
-    const errorParam = searchParams.get('error')
-    if (errorParam) {
-      setError(decodeURIComponent(errorParam))
-    }
-  }, [searchParams])
-
-  useEffect(() => {
-    inviteCodeInputRef.current?.focus()
-  }, [])
 
   const {
     register,
@@ -70,7 +60,7 @@ function GoogleLoginForm() {
         setLoading(false)
       }
       // OAuth로 리다이렉트되면 로딩 상태 유지
-    } catch (err) {
+    } catch {
       setError('로그인 중 오류가 발생했습니다.')
       setLoading(false)
     }

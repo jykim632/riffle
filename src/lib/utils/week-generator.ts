@@ -24,7 +24,7 @@ export function generateWeeks(
   const weeks: Week[] = []
 
   // 시작일의 요일 확인 (0 = 일요일, 1 = 월요일, ...)
-  let currentDate = new Date(start)
+  const currentDate = new Date(start)
 
   // 시작일이 월요일이 아니면 다음 월요일로 이동
   const dayOfWeek = currentDate.getDay()

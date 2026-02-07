@@ -51,8 +51,18 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
     .order('created_at', { ascending: false })
     .limit(20)
 
-  // Supabase JOIN 결과 타입 처리
-  const summaries = summariesRaw?.map((summary: any) => ({
+  // Supabase 뷰 JOIN 결과 타입 (latest_summaries + weeks + profiles)
+  type SummaryWithRelations = {
+    id: string
+    content: string
+    created_at: string
+    week_id: string
+    author_id: string
+    weeks: { week_number: number; title: string } | { week_number: number; title: string }[]
+    profiles: { nickname: string } | { nickname: string }[]
+  }
+
+  const summaries = (summariesRaw as unknown as SummaryWithRelations[] | null)?.map((summary) => ({
     id: summary.id,
     content: summary.content,
     created_at: summary.created_at,

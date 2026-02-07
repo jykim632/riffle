@@ -97,8 +97,15 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  // Supabase JOIN 결과를 올바른 타입으로 변환
-  const currentWeekSummaries = currentWeekSummariesRaw?.map((summary: any) => ({
+  // Supabase 뷰 JOIN 결과 타입 (first_summaries + profiles)
+  type SummaryWithProfile = {
+    id: string
+    content: string
+    created_at: string
+    profiles: { nickname: string } | { nickname: string }[]
+  }
+
+  const currentWeekSummaries = (currentWeekSummariesRaw as unknown as SummaryWithProfile[] | null)?.map((summary) => ({
     id: summary.id,
     content: summary.content,
     created_at: summary.created_at,

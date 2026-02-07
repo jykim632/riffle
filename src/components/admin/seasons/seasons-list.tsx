@@ -36,7 +36,7 @@ export function SeasonsList({ seasons }: SeasonsListProps) {
       if (!result.success) {
         alert(`활성화 변경 실패: ${result.error}`)
       }
-    } catch (error) {
+    } catch {
       alert('활성화 변경 중 오류 발생')
     } finally {
       setLoading(null)
