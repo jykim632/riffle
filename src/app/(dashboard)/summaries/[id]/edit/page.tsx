@@ -86,13 +86,12 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
     )
   }
 
-  // 6. 최근 4주 조회 (현재 시즌만)
+  // 6. 시즌 전체 주차 조회
   const { data: recentWeeks } = await supabase
     .from('weeks')
     .select('id, season_id, week_number, title, start_date, end_date, is_current')
     .eq('season_id', currentSeason.id)
-    .order('week_number', { ascending: false })
-    .limit(4)
+    .order('week_number', { ascending: true })
 
   let weeks = recentWeeks || []
 
