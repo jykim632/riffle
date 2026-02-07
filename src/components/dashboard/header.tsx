@@ -1,6 +1,8 @@
 import Link from 'next/link'
-import { Calendar } from 'lucide-react'
+import { Calendar, BookOpen } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { UserMenu } from './user-menu'
 
 interface HeaderProps {
@@ -61,6 +63,23 @@ export function Header({ currentWeek, user, isAdmin = false }: HeaderProps) {
             <span className="hidden sm:inline">{currentWeek.week_number}주차</span>
             <span className="sm:hidden">{currentWeek.week_number}주</span>
           </Badge>
+
+          {/* 가이드 */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                  <Link href="/guide">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="sr-only">가이드</span>
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>가이드</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           {/* 사용자 메뉴 */}
           <UserMenu nickname={user.nickname} />
