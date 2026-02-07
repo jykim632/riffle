@@ -34,8 +34,9 @@ export default async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // 보호된 라우트: /dashboard로 시작하는 경로
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+  // 보호된 라우트
+  const protectedPaths = ['/dashboard', '/admin', '/mine', '/summaries']
+  if (protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }

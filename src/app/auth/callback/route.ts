@@ -60,27 +60,17 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      // 초대 코드 사용 처리 (optimistic locking)
-      const { data: updatedCode } = await adminClient
-        .from('invite_codes')
-        .update({
-          is_used: true,
-          used_by: data.user.id,
-          used_at: new Date().toISOString(),
-        })
-        .eq('id', codeData.id)
-        .eq('is_used', false)
-        .select()
-        .single()
+      // 초대 코드 원자적 사용 처리 (DB 함수로 race condition 방지)
+      const { data: acquired } = await adminClient.rpc('acquire_invite_code', {
+        code_input: inviteCode,
+        user_id_input: data.user.id,
+      })
 
-      if (!updatedCode) {
-        // 극히 드문 케이스: race condition
-        console.error('초대 코드 중복 사용 감지 (OAuth):', {
+      if (!acquired) {
+        console.error('초대 코드 사용 실패 (OAuth):', {
           code: inviteCode,
           userId: data.user.id,
-          email: data.user.email,
         })
-        // 로그만 남기고 진행
       }
     } else if (!profile && !inviteCode) {
       // 신규 사용자인데 초대 코드 없음 - 회원가입 페이지로 안내

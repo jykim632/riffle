@@ -1,9 +1,9 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
 import { seasonId } from '@/lib/nanoid'
 import { generateWeeks } from '@/lib/utils/week-generator'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from './auth-guard'
 
 interface CreateSeasonInput {
   name: string
@@ -15,12 +15,13 @@ interface CreateSeasonInput {
  * 시즌 생성 + 주차 자동 생성
  */
 export async function createSeasonAction(data: CreateSeasonInput) {
-  const supabase = await createClient()
+  const auth = await requireAdmin()
+  if (!auth.authorized) return auth.response
 
   // 1. 시즌 생성
   const newSeasonId = seasonId()
 
-  const { error: seasonError } = await supabase.from('seasons').insert({
+  const { error: seasonError } = await auth.supabase.from('seasons').insert({
     id: newSeasonId,
     name: data.name,
     start_date: data.start_date,
@@ -29,18 +30,18 @@ export async function createSeasonAction(data: CreateSeasonInput) {
   })
 
   if (seasonError) {
-    return { success: false, error: seasonError.message }
+    return { success: false, error: '시즌 생성에 실패했습니다.' }
   }
 
   // 2. 주차 자동 생성
   const weeks = generateWeeks(data.start_date, data.end_date, newSeasonId)
 
-  const { error: weeksError } = await supabase.from('weeks').insert(weeks)
+  const { error: weeksError } = await auth.supabase.from('weeks').insert(weeks)
 
   if (weeksError) {
     // 주차 생성 실패 시 시즌 삭제 (롤백)
-    await supabase.from('seasons').delete().eq('id', newSeasonId)
-    return { success: false, error: weeksError.message }
+    await auth.supabase.from('seasons').delete().eq('id', newSeasonId)
+    return { success: false, error: '주차 생성에 실패했습니다.' }
   }
 
   revalidatePath('/admin/seasons')
@@ -51,18 +52,19 @@ export async function createSeasonAction(data: CreateSeasonInput) {
  * 시즌 정보 수정
  */
 export async function updateSeasonAction(
-  seasonId: string,
+  sid: string,
   data: Partial<CreateSeasonInput>
 ) {
-  const supabase = await createClient()
+  const auth = await requireAdmin()
+  if (!auth.authorized) return auth.response
 
-  const { error } = await supabase
+  const { error } = await auth.supabase
     .from('seasons')
     .update(data)
-    .eq('id', seasonId)
+    .eq('id', sid)
 
   if (error) {
-    return { success: false, error: error.message }
+    return { success: false, error: '시즌 수정에 실패했습니다.' }
   }
 
   revalidatePath('/admin/seasons')
@@ -72,22 +74,23 @@ export async function updateSeasonAction(
 /**
  * 시즌 활성화/비활성화
  */
-export async function toggleSeasonActiveAction(seasonId: string, isActive: boolean) {
-  const supabase = await createClient()
+export async function toggleSeasonActiveAction(sid: string, isActive: boolean) {
+  const auth = await requireAdmin()
+  if (!auth.authorized) return auth.response
 
   if (isActive) {
     // 활성화하려는 경우: 기존 활성 시즌을 비활성화
-    await supabase.from('seasons').update({ is_active: false }).eq('is_active', true)
+    await auth.supabase.from('seasons').update({ is_active: false }).eq('is_active', true)
   }
 
   // 선택한 시즌을 활성화/비활성화
-  const { error } = await supabase
+  const { error } = await auth.supabase
     .from('seasons')
     .update({ is_active: isActive })
-    .eq('id', seasonId)
+    .eq('id', sid)
 
   if (error) {
-    return { success: false, error: error.message }
+    return { success: false, error: '시즌 활성화 변경에 실패했습니다.' }
   }
 
   revalidatePath('/admin/seasons')
@@ -98,18 +101,19 @@ export async function toggleSeasonActiveAction(seasonId: string, isActive: boole
 /**
  * 시즌 멤버 추가
  */
-export async function addSeasonMembersAction(seasonId: string, userIds: string[]) {
-  const supabase = await createClient()
+export async function addSeasonMembersAction(sid: string, userIds: string[]) {
+  const auth = await requireAdmin()
+  if (!auth.authorized) return auth.response
 
   const members = userIds.map((userId) => ({
-    season_id: seasonId,
+    season_id: sid,
     user_id: userId,
   }))
 
-  const { error } = await supabase.from('season_members').insert(members)
+  const { error } = await auth.supabase.from('season_members').insert(members)
 
   if (error) {
-    return { success: false, error: error.message }
+    return { success: false, error: '멤버 추가에 실패했습니다.' }
   }
 
   revalidatePath('/admin/seasons')
@@ -119,17 +123,18 @@ export async function addSeasonMembersAction(seasonId: string, userIds: string[]
 /**
  * 시즌 멤버 제거
  */
-export async function removeSeasonMemberAction(seasonId: string, userId: string) {
-  const supabase = await createClient()
+export async function removeSeasonMemberAction(sid: string, userId: string) {
+  const auth = await requireAdmin()
+  if (!auth.authorized) return auth.response
 
-  const { error } = await supabase
+  const { error } = await auth.supabase
     .from('season_members')
     .delete()
-    .eq('season_id', seasonId)
+    .eq('season_id', sid)
     .eq('user_id', userId)
 
   if (error) {
-    return { success: false, error: error.message }
+    return { success: false, error: '멤버 제거에 실패했습니다.' }
   }
 
   revalidatePath('/admin/seasons')

@@ -92,35 +92,24 @@ export async function signup(formData: FormData) {
   })
 
   if (signUpError) {
-    return { error: signUpError.message }
+    return { error: '회원가입에 실패했습니다. 다시 시도해주세요.' }
   }
 
   if (!authData.user) {
     return { error: '회원가입에 실패했습니다.' }
   }
 
-  // 3. 초대 코드 사용 처리 (optimistic locking)
-  const { data: updatedCode } = await adminClient
-    .from('invite_codes')
-    .update({
-      is_used: true,
-      used_by: authData.user.id,
-      used_at: new Date().toISOString(),
-    })
-    .eq('id', code.id)
-    .eq('is_used', false) // race condition 방지
-    .select()
-    .single()
+  // 3. 초대 코드 원자적 사용 처리 (DB 함수로 race condition 방지)
+  const { data: acquired } = await adminClient.rpc('acquire_invite_code', {
+    code_input: inviteCode,
+    user_id_input: authData.user.id,
+  })
 
-  if (!updatedCode) {
-    // 극히 드문 케이스: 회원가입 완료 후 코드가 이미 사용됨
-    // 계정은 생성되었지만 초대 코드 중복 사용 발생
-    console.error('초대 코드 중복 사용 감지:', {
+  if (!acquired) {
+    console.error('초대 코드 사용 실패 (이미 사용됨):', {
       code: inviteCode,
       userId: authData.user.id,
-      email,
     })
-    // 로그만 남기고 진행 (계정 삭제는 복잡하므로 수동 처리)
   }
 
   redirect('/dashboard')
