@@ -75,13 +75,12 @@ export default async function NewSummaryPage(props: { searchParams: Promise<Sear
     )
   }
 
-  // 5. 최근 4주 조회 (현재 시즌만)
+  // 5. 시즌 전체 주차 조회
   const { data: weeks } = await supabase
     .from('weeks')
     .select('id, season_id, week_number, title, start_date, end_date, is_current')
     .eq('season_id', currentSeason.id)
-    .order('week_number', { ascending: false })
-    .limit(4)
+    .order('week_number', { ascending: true })
 
   if (!weeks || weeks.length === 0) {
     return (
