@@ -43,8 +43,8 @@ export function MarketSummaryWidget({ indicators, previousIndicators }: MarketSu
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {ordered.map((ind) => {
+        <div className="flex items-center gap-3 overflow-x-auto sm:gap-5">
+          {ordered.map((ind, i) => {
             const def = INDICATOR_MAP[ind.indicator_code]
             if (!def) return null
 
@@ -54,17 +54,20 @@ export function MarketSummaryWidget({ indicators, previousIndicators }: MarketSu
               : null
 
             return (
-              <div key={ind.indicator_code} className="space-y-0.5">
-                <p className="text-xs text-muted-foreground">{def.label}</p>
-                <p className="text-base font-bold tabular-nums sm:text-lg">
+              <div key={ind.indicator_code} className="flex shrink-0 items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">{def.label}</span>
+                <span className="text-sm font-bold tabular-nums">
                   {formatWidgetValue(ind.data_value, def.unit)}
-                </p>
+                </span>
                 {change !== null ? (
-                  <p className={`text-xs font-medium tabular-nums ${getChangeColor(change)}`}>
+                  <span className={`text-xs font-medium tabular-nums ${getChangeColor(change)}`}>
                     {getChangeArrow(change)}{formatChange(change)}
-                  </p>
+                  </span>
                 ) : (
-                  <p className="text-xs text-muted-foreground">─</p>
+                  <span className="text-xs text-muted-foreground">─</span>
+                )}
+                {i < ordered.length - 1 && (
+                  <span className="ml-1 text-border sm:ml-2">|</span>
                 )}
               </div>
             )
