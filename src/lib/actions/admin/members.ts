@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from './auth-guard'
 
 /**
@@ -40,16 +40,7 @@ export async function deleteUserAccountAction(userId: string) {
     return { success: false, error: '본인 계정은 삭제할 수 없습니다.' }
   }
 
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  )
+  const adminClient = createAdminClient()
 
   const { error } = await adminClient.auth.admin.deleteUser(userId)
 
@@ -74,16 +65,7 @@ export async function resetMemberPasswordAction(userId: string) {
     return { success: false, error: 'ADMIN_RESET_PASSWORD 환경변수가 설정되지 않았습니다.' }
   }
 
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  )
+  const adminClient = createAdminClient()
 
   const { error } = await adminClient.auth.admin.updateUserById(userId, {
     password: resetPassword,

@@ -1,4 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/auth'
+import { getCurrentSeason, getSeasonWeeks } from '@/lib/queries/season'
+import { normalizeRelation } from '@/lib/utils/supabase'
+import { EmptyState } from '@/components/empty-state'
 import { redirect, notFound } from 'next/navigation'
 import { SummaryForm } from '@/components/summary/summary-form'
 import { isSeasonMember, isAdmin } from '@/lib/utils/season-membership'
@@ -10,16 +13,7 @@ interface Params {
 
 export default async function EditSummaryPage(props: { params: Promise<Params> }) {
   const params = await props.params
-  const supabase = await createClient()
-
-  // 1. 현재 사용자 확인
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   // 2. 요약본 조회 (시즌 정보 포함)
   const { data: summaryRaw, error } = await supabase
@@ -44,12 +38,12 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
     content: summaryRaw.content,
     week_id: summaryRaw.week_id,
     author_id: summaryRaw.author_id,
-    weeks: Array.isArray(summaryRaw.weeks) ? summaryRaw.weeks[0] : summaryRaw.weeks,
+    weeks: normalizeRelation(summaryRaw.weeks)!,
   }
 
   // 3. 본인 확인 (RLS가 막지만 UI에서도 체크)
   if (summary.author_id !== user.id) {
-    redirect(`/mine/${params.id}`)
+    redirect(`/summaries/${params.id}`)
   }
 
   // 4. 멤버십 확인 (관리자는 항상 허용)
@@ -69,31 +63,14 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
   }
 
   // 5. 현재 시즌 확인
-  const { data: currentSeason } = await supabase
-    .from('seasons')
-    .select('id')
-    .eq('is_active', true)
-    .maybeSingle()
+  const currentSeason = await getCurrentSeason(supabase)
 
   if (!currentSeason) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">현재 시즌이 없어요</h1>
-          <p className="text-muted-foreground">관리자에게 시즌 생성을 요청하세요.</p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="현재 시즌이 없어요" description="관리자에게 시즌 생성을 요청하세요." />
   }
 
   // 6. 시즌 전체 주차 조회
-  const { data: recentWeeks } = await supabase
-    .from('weeks')
-    .select('id, season_id, week_number, title, start_date, end_date, is_current')
-    .eq('season_id', currentSeason.id)
-    .order('week_number', { ascending: true })
-
-  let weeks = recentWeeks || []
+  let weeks = await getSeasonWeeks(supabase, currentSeason.id)
 
   // 7. 엣지케이스: 현재 week_id가 최근 4주에 없으면 추가 조회 (다른 시즌 주차일 수도 있음)
   const currentWeekId = summary.week_id
@@ -104,7 +81,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
       .from('weeks')
       .select('id, season_id, week_number, title, start_date, end_date, is_current')
       .eq('id', currentWeekId)
-      .single()
+      .maybeSingle()
 
     if (currentWeek) {
       weeks = [currentWeek, ...weeks]
@@ -112,14 +89,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
   }
 
   if (weeks.length === 0) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">주차 정보를 불러올 수 없어요</h1>
-          <p className="text-muted-foreground">관리자에게 문의하세요.</p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="주차 정보를 불러올 수 없어요" description="관리자에게 문의하세요." />
   }
 
   return (

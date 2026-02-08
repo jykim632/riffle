@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
+import { requireUser } from '@/lib/auth'
+import { notFound } from 'next/navigation'
 import { AdminSidebar } from '@/components/admin/sidebar'
 import { isAdmin } from '@/lib/utils/season-membership'
 
@@ -8,16 +8,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-
-  // 현재 사용자 확인
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const { user } = await requireUser()
 
   // 관리자 권한 확인
   const admin = await isAdmin(user.id)

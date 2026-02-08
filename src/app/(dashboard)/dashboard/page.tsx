@@ -1,5 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireUser } from '@/lib/auth'
+import { getCurrentSeason, getCurrentWeek } from '@/lib/queries/season'
+import { normalizeRelation } from '@/lib/utils/supabase'
+import { EmptyState } from '@/components/empty-state'
 import { WeekOverview } from '@/components/dashboard/week-overview'
 import { CurrentWeekSummaries } from '@/components/dashboard/current-week-summaries'
 import { SeasonBanner } from '@/components/dashboard/season-banner'
@@ -7,57 +9,21 @@ import { isCurrentSeasonMember, isAdmin } from '@/lib/utils/season-membership'
 import { NonMemberAlert } from '@/components/season/non-member-alert'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-
-  // 1. 현재 사용자 조회
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   // 2. 현재 시즌 조회
-  const { data: currentSeason } = await supabase
-    .from('seasons')
-    .select('*')
-    .eq('is_active', true)
-    .maybeSingle()
+  const currentSeason = await getCurrentSeason(supabase)
 
   if (!currentSeason) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">현재 시즌이 없어요</h1>
-          <p className="text-muted-foreground">
-            관리자에게 시즌 생성을 요청하세요.
-          </p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="현재 시즌이 없어요" description="관리자에게 시즌 생성을 요청하세요." />
   }
 
   // 3. 현재 주차 조회 (현재 시즌 내)
-  const { data: currentWeek } = await supabase
-    .from('weeks')
-    .select('*')
-    .eq('season_id', currentSeason.id)
-    .eq('is_current', true)
-    .maybeSingle()
+  const currentWeek = await getCurrentWeek(supabase, currentSeason.id)
 
   // 현재 주차가 없으면 빈 상태 표시
   if (!currentWeek) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">현재 주차가 없어요</h1>
-          <p className="text-muted-foreground">
-            관리자에게 주차 생성을 요청하세요.
-          </p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="현재 주차가 없어요" description="관리자에게 주차 생성을 요청하세요." />
   }
 
   // 4. 멤버십 확인
@@ -107,7 +73,7 @@ export default async function DashboardPage() {
 
   const memberNicknames = (seasonMembers as { user_id: string; profiles: { nickname: string } | { nickname: string }[] }[] | null)
     ?.map((m) => {
-      const profile = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
+      const profile = normalizeRelation(m.profiles)
       return profile?.nickname ?? '알 수 없음'
     })
     .sort() ?? []
@@ -134,7 +100,7 @@ export default async function DashboardPage() {
     author_id: summary.author_id,
     content: summary.content,
     created_at: summary.created_at,
-    profiles: Array.isArray(summary.profiles) ? summary.profiles[0] : summary.profiles,
+    profiles: normalizeRelation(summary.profiles),
   }))
 
   return (

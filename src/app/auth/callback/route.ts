@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -29,28 +29,19 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('id')
       .eq('id', data.user.id)
-      .single()
+      .maybeSingle()
 
     // 신규 사용자인 경우 초대 코드 검증
     if (!profile && inviteCode) {
       // service_role로 초대 코드 검증
-      const adminClient = createSupabaseClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        }
-      )
+      const adminClient = createAdminClient()
 
       const { data: codeData } = await adminClient
         .from('invite_codes')
         .select()
         .eq('code', inviteCode.toUpperCase())
         .eq('is_used', false)
-        .single()
+        .maybeSingle()
 
       if (!codeData) {
         // 초대 코드 없음 - 계정 삭제하고 에러

@@ -1,20 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/auth'
+import { normalizeRelation } from '@/lib/utils/supabase'
 import { redirect } from 'next/navigation'
 import { ProfileForm } from './profile-form'
 
 export default async function ProfilePage() {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('nickname, role, created_at')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!profile) {
     redirect('/dashboard')
@@ -28,7 +24,7 @@ export default async function ProfilePage() {
     .order('joined_at', { ascending: false })
 
   const seasons = (seasonMembers ?? []).map((sm) => {
-    const s = Array.isArray(sm.seasons) ? sm.seasons[0] : sm.seasons
+    const s = normalizeRelation(sm.seasons)
     return {
       name: s?.name ?? '',
       startDate: s?.start_date ?? '',

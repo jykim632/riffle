@@ -47,7 +47,7 @@ export function SummaryActions({ summaryId, isAuthor }: SummaryActionsProps) {
   return (
     <div className="flex gap-2">
       <Button asChild variant="outline" size="icon">
-        <Link href={`/mine/${summaryId}/edit`}>
+        <Link href={`/summaries/${summaryId}/edit`}>
           <Pencil className="h-4 w-4" />
         </Link>
       </Button>

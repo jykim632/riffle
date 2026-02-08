@@ -1,28 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { MembersList } from '@/components/admin/members/members-list'
 
 export default async function MembersPage() {
   const supabase = await createClient()
 
   // service role 클라이언트로 auth.users의 provider 정보 조회
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  )
+  const adminClient = createAdminClient()
   const { data: authUsers } = await adminClient.auth.admin.listUsers()
   const providerMap = new Map<string, string[]>()
   for (const u of authUsers?.users || []) {
     providerMap.set(u.id, u.app_metadata?.providers || [])
   }
 
-  // 현재 사용자 ID
+  // 현재 사용자 ID (layout에서 인증 확인 완료)
   const {
     data: { user },
   } = await supabase.auth.getUser()
