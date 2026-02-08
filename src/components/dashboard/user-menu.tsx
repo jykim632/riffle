@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { User, LogOut, KeyRound } from 'lucide-react'
+import { User, LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -15,10 +15,9 @@ import { logout } from '@/actions/auth'
 
 interface UserMenuProps {
   nickname: string
-  hasPassword?: boolean
 }
 
-export function UserMenu({ nickname, hasPassword = false }: UserMenuProps) {
+export function UserMenu({ nickname }: UserMenuProps) {
   const handleLogout = async () => {
     await logout()
   }
@@ -44,14 +43,12 @@ export function UserMenu({ nickname, hasPassword = false }: UserMenuProps) {
           <span className="truncate">{nickname}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {hasPassword && (
-          <DropdownMenuItem asChild className="cursor-pointer">
-            <Link href="/settings/password">
-              <KeyRound className="mr-2 h-4 w-4" />
-              비밀번호 변경
-            </Link>
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href="/settings/profile">
+            <User className="mr-2 h-4 w-4" />
+            내 정보
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
           로그아웃

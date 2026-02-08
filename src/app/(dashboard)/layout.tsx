@@ -58,7 +58,7 @@ export default async function DashboardLayout({
       <div className="min-h-screen">
         <Header
           currentWeek={weekInfo}
-          user={{ nickname: profile.nickname, hasPassword: user.app_metadata?.provider === 'email' }}
+          user={{ nickname: profile.nickname }}
           isAdmin={profile.role === 'admin'}
         />
         <main className="bg-muted/30">{children}</main>
