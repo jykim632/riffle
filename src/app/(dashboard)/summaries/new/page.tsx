@@ -1,5 +1,6 @@
 import { requireUser } from '@/lib/auth'
 import { getCurrentSeason, getCurrentWeek, getSeasonWeeks } from '@/lib/queries/season'
+import { EmptyState } from '@/components/empty-state'
 import { SummaryForm } from '@/components/summary/summary-form'
 import { isCurrentSeasonMember, isAdmin } from '@/lib/utils/season-membership'
 import { AccessDeniedPage } from '@/components/season/access-denied-page'
@@ -16,16 +17,7 @@ export default async function NewSummaryPage(props: { searchParams: Promise<Sear
   const currentSeason = await getCurrentSeason(supabase)
 
   if (!currentSeason) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">현재 시즌이 없어요</h1>
-          <p className="text-muted-foreground">
-            관리자에게 시즌 생성을 요청하세요.
-          </p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="현재 시즌이 없어요" description="관리자에게 시즌 생성을 요청하세요." />
   }
 
   // 3. 멤버십 확인 (관리자는 항상 허용)
@@ -45,32 +37,14 @@ export default async function NewSummaryPage(props: { searchParams: Promise<Sear
   const currentWeek = await getCurrentWeek(supabase, currentSeason.id)
 
   if (!currentWeek) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">현재 주차가 없어요</h1>
-          <p className="text-muted-foreground">
-            관리자에게 주차 생성을 요청하세요.
-          </p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="현재 주차가 없어요" description="관리자에게 주차 생성을 요청하세요." />
   }
 
   // 5. 시즌 전체 주차 조회
   const weeks = await getSeasonWeeks(supabase, currentSeason.id)
 
   if (weeks.length === 0) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">주차 정보를 불러올 수 없어요</h1>
-          <p className="text-muted-foreground">
-            관리자에게 문의하세요.
-          </p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="주차 정보를 불러올 수 없어요" description="관리자에게 문의하세요." />
   }
 
   // 6. 초기 weekId 결정 (URL query 또는 현재 주차)

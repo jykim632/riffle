@@ -1,16 +1,12 @@
 'use server'
 
-import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { parseFormData } from '@/lib/actions/types'
 import { resetRequestSchema, updatePasswordSchema, changePasswordSchema } from '@/lib/schemas'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/utils/ip'
 
 const RATE_LIMIT_ERROR = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
-
-async function getClientIp(): Promise<string> {
-  const h = await headers()
-  return h.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-}
 
 // 비밀번호 초기화 이메일 요청
 export async function requestPasswordReset(formData: FormData) {
@@ -23,10 +19,8 @@ export async function requestPasswordReset(formData: FormData) {
     email: formData.get('email') as string,
   }
 
-  const result = resetRequestSchema.safeParse(rawData)
-  if (!result.success) {
-    return { error: '유효한 이메일을 입력해주세요.' }
-  }
+  const result = parseFormData(resetRequestSchema, rawData)
+  if (!result.success) return { error: result.error }
 
   const origin = formData.get('origin') as string
   const supabase = await createClient()
@@ -51,11 +45,8 @@ export async function updatePassword(formData: FormData) {
     confirmPassword: formData.get('confirmPassword') as string,
   }
 
-  const result = updatePasswordSchema.safeParse(rawData)
-  if (!result.success) {
-    const firstError = result.error.issues[0]
-    return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
-  }
+  const result = parseFormData(updatePasswordSchema, rawData)
+  if (!result.success) return { error: result.error }
 
   const supabase = await createClient()
 
@@ -84,11 +75,8 @@ export async function changePassword(formData: FormData) {
     confirmPassword: formData.get('confirmPassword') as string,
   }
 
-  const result = changePasswordSchema.safeParse(rawData)
-  if (!result.success) {
-    const firstError = result.error.issues[0]
-    return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
-  }
+  const result = parseFormData(changePasswordSchema, rawData)
+  if (!result.success) return { error: result.error }
 
   const supabase = await createClient()
 

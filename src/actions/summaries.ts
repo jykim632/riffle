@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { parseFormData } from '@/lib/actions/types'
 import {
   createSummarySchema,
   updateSummarySchema,
@@ -15,12 +16,8 @@ export async function createSummary(formData: FormData) {
     content: formData.get('content') as string,
   }
 
-  // 입력값 검증
-  const result = createSummarySchema.safeParse(rawData)
-  if (!result.success) {
-    const firstError = result.error.issues[0]
-    return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
-  }
+  const result = parseFormData(createSummarySchema, rawData)
+  if (!result.success) return { error: result.error }
 
   const { weekId, content } = result.data
   const supabase = await createClient()
@@ -60,12 +57,8 @@ export async function updateSummary(formData: FormData) {
     content: formData.get('content') as string,
   }
 
-  // 입력값 검증
-  const result = updateSummarySchema.safeParse(rawData)
-  if (!result.success) {
-    const firstError = result.error.issues[0]
-    return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
-  }
+  const result = parseFormData(updateSummarySchema, rawData)
+  if (!result.success) return { error: result.error }
 
   const { summaryId, weekId, content } = result.data
   const supabase = await createClient()
@@ -89,12 +82,8 @@ export async function deleteSummary(formData: FormData) {
     summaryId: formData.get('summaryId') as string,
   }
 
-  // 입력값 검증
-  const result = deleteSummarySchema.safeParse(rawData)
-  if (!result.success) {
-    const firstError = result.error.issues[0]
-    return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
-  }
+  const result = parseFormData(deleteSummarySchema, rawData)
+  if (!result.success) return { error: result.error }
 
   const { summaryId } = result.data
   const supabase = await createClient()

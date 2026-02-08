@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils/date'
+import { getAuthorName } from '@/lib/utils/supabase'
 
 interface CurrentWeekSummariesProps {
   summaries: Array<{
@@ -70,7 +71,7 @@ export function CurrentWeekSummaries({ summaries, weekId }: CurrentWeekSummaries
             >
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium">
-                  {summary.author_id === null ? '탈퇴한 멤버' : (summary.profiles?.nickname || '알 수 없음')}
+                  {getAuthorName(summary.author_id, summary.profiles?.nickname)}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {formatDate(summary.created_at)}

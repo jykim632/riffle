@@ -1,5 +1,7 @@
 import { requireUser } from '@/lib/auth'
 import { getCurrentSeason, getSeasonWeeks } from '@/lib/queries/season'
+import { normalizeRelation } from '@/lib/utils/supabase'
+import { EmptyState } from '@/components/empty-state'
 import { redirect, notFound } from 'next/navigation'
 import { SummaryForm } from '@/components/summary/summary-form'
 import { isSeasonMember, isAdmin } from '@/lib/utils/season-membership'
@@ -36,7 +38,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
     content: summaryRaw.content,
     week_id: summaryRaw.week_id,
     author_id: summaryRaw.author_id,
-    weeks: Array.isArray(summaryRaw.weeks) ? summaryRaw.weeks[0] : summaryRaw.weeks,
+    weeks: normalizeRelation(summaryRaw.weeks)!,
   }
 
   // 3. 본인 확인 (RLS가 막지만 UI에서도 체크)
@@ -64,14 +66,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
   const currentSeason = await getCurrentSeason(supabase)
 
   if (!currentSeason) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">현재 시즌이 없어요</h1>
-          <p className="text-muted-foreground">관리자에게 시즌 생성을 요청하세요.</p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="현재 시즌이 없어요" description="관리자에게 시즌 생성을 요청하세요." />
   }
 
   // 6. 시즌 전체 주차 조회
@@ -94,14 +89,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
   }
 
   if (weeks.length === 0) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">주차 정보를 불러올 수 없어요</h1>
-          <p className="text-muted-foreground">관리자에게 문의하세요.</p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="주차 정보를 불러올 수 없어요" description="관리자에게 문의하세요." />
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { parseFormData } from '@/lib/actions/types'
 import { updateNicknameSchema } from '@/lib/schemas'
 
 export async function updateNickname(formData: FormData) {
@@ -9,11 +10,8 @@ export async function updateNickname(formData: FormData) {
     nickname: formData.get('nickname') as string,
   }
 
-  const result = updateNicknameSchema.safeParse(rawData)
-  if (!result.success) {
-    const firstError = result.error.issues[0]
-    return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
-  }
+  const result = parseFormData(updateNicknameSchema, rawData)
+  if (!result.success) return { error: result.error }
 
   const supabase = await createClient()
 

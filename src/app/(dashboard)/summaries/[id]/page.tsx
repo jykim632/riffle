@@ -1,4 +1,5 @@
 import { requireUser } from '@/lib/auth'
+import { normalizeRelation, getAuthorName } from '@/lib/utils/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
@@ -27,8 +28,8 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
   }
 
   // Supabase JOIN 결과 타입 처리
-  const weeks = Array.isArray(summary.weeks) ? summary.weeks[0] : summary.weeks
-  const profiles = Array.isArray(summary.profiles) ? summary.profiles[0] : summary.profiles
+  const weeks = normalizeRelation(summary.weeks)
+  const profiles = normalizeRelation(summary.profiles)
 
   // 3. 같은 작성자의 같은 주차 모든 버전 조회 (탈퇴한 멤버는 버전 조회 불가)
   const { data: allVersions } = summary.author_id
@@ -63,7 +64,7 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
       <Card>
         <CardHeader>
           <CardDescription>
-            작성자: {summary.author_id === null ? '탈퇴한 멤버' : (profiles?.nickname || '알 수 없음')} • 작성일:{' '}
+            작성자: {getAuthorName(summary.author_id, profiles?.nickname)} • 작성일:{' '}
             {new Date(summary.created_at).toLocaleDateString('ko-KR')}
           </CardDescription>
 

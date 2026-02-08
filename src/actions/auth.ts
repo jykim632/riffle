@@ -4,15 +4,12 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { parseFormData } from '@/lib/actions/types'
 import { loginSchema, signupSchema } from '@/lib/schemas'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/utils/ip'
 
 const RATE_LIMIT_ERROR = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
-
-async function getClientIp(): Promise<string> {
-  const h = await headers()
-  return h.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-}
 
 // 로그인
 export async function login(formData: FormData) {
@@ -26,11 +23,8 @@ export async function login(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  // 입력값 검증
-  const result = loginSchema.safeParse(rawData)
-  if (!result.success) {
-    return { error: '입력값이 올바르지 않습니다.' }
-  }
+  const result = parseFormData(loginSchema, rawData)
+  if (!result.success) return { error: result.error }
 
   const { email, password } = result.data
   const supabase = await createClient()
@@ -71,12 +65,8 @@ export async function signup(formData: FormData) {
     inviteCode: formData.get('inviteCode') as string,
   }
 
-  // 입력값 검증
-  const validationResult = signupSchema.safeParse(rawData)
-  if (!validationResult.success) {
-    const firstError = validationResult.error.issues[0]
-    return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
-  }
+  const validationResult = parseFormData(signupSchema, rawData)
+  if (!validationResult.success) return { error: validationResult.error }
 
   const { email, password, nickname, inviteCode } = validationResult.data
 
