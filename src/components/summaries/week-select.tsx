@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { formatShortDateRange } from '@/lib/utils/date'
 
 interface Week {
   id: string
@@ -22,13 +23,6 @@ interface WeekSelectProps {
   weeks: Week[]
   currentWeekId?: string
   filter?: string
-}
-
-function formatDateRange(startDate: string, endDate: string) {
-  const start = new Date(startDate + 'T00:00:00')
-  const end = new Date(endDate + 'T00:00:00')
-  const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`
-  return `${fmt(start)} ~ ${fmt(end)}`
 }
 
 function buildHref(params: { week?: string; filter?: string }) {
@@ -57,7 +51,7 @@ export function WeekSelect({ weeks, currentWeekId, filter }: WeekSelectProps) {
         <SelectItem value="all">전체 주차</SelectItem>
         {weeks.map((week) => (
           <SelectItem key={week.id} value={week.id} className={week.is_current ? 'text-primary font-semibold' : ''}>
-            {week.week_number}주차 ({formatDateRange(week.start_date, week.end_date)})
+            {week.week_number}주차 ({formatShortDateRange(week.start_date, week.end_date)})
             {week.is_current && ' — 이번 주'}
           </SelectItem>
         ))}

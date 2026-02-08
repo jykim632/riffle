@@ -34,8 +34,7 @@ import {
   resetMemberPasswordAction,
   deleteUserAccountAction,
 } from '@/lib/actions/admin/members'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import { formatDate } from '@/lib/utils/date'
 import { KeyRound, Trash2 } from 'lucide-react'
 
 interface MemberWithSeasons {
@@ -125,9 +124,7 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
         </TableHeader>
         <TableBody>
           {members.map((member) => {
-            const createdAt = format(new Date(member.created_at), 'yyyy.MM.dd', {
-              locale: ko,
-            })
+            const createdAt = formatDate(member.created_at)
             const isCurrentUser = member.id === currentUserId
 
             return (

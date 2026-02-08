@@ -1,4 +1,5 @@
 import { INDICATOR_MAP } from '@/lib/ecos'
+import { formatDate } from '@/lib/utils/date'
 import { Card, CardContent } from '@/components/ui/card'
 import { Sparkline } from './sparkline'
 import { ChangeBadge } from './change-badge'
@@ -40,7 +41,7 @@ export function IndicatorCard({
         </div>
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            {unitName ?? def.unit} · {timeLabel}
+            {unitName ?? def.unit} · {formatDate(timeLabel)}
           </span>
           <ChangeBadge current={value} previous={previousValue} />
         </div>

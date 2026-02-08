@@ -50,6 +50,55 @@ export async function getIndicatorHistory(
 }
 
 /**
+ * 배치 히스토리 조회: 여러 주차의 모든 지표를 한 번에 조회
+ * 스파크라인용 히스토리 데이터를 N+1 없이 가져옴
+ */
+export async function getIndicatorsHistoryBatch(
+  supabase: SupabaseClient,
+  weekIds: string[]
+): Promise<Record<string, number[]>> {
+  if (weekIds.length === 0) return {}
+
+  const { data } = await supabase
+    .from('indicator_snapshots')
+    .select('indicator_code, data_value, week_id')
+    .in('week_id', weekIds)
+    .order('fetched_at', { ascending: true })
+
+  if (!data) return {}
+
+  const result: Record<string, number[]> = {}
+  for (const row of data) {
+    const arr = result[row.indicator_code] ?? []
+    arr.push(row.data_value)
+    result[row.indicator_code] = arr
+  }
+  return result
+}
+
+/**
+ * 현재 주차 기준 최근 N주의 weekId 목록 반환
+ */
+export async function getRecentWeekIds(
+  supabase: SupabaseClient,
+  seasonId: string,
+  currentWeekNumber: number,
+  count: number = 8
+): Promise<string[]> {
+  const minWeek = Math.max(1, currentWeekNumber - count + 1)
+
+  const { data } = await supabase
+    .from('weeks')
+    .select('id')
+    .eq('season_id', seasonId)
+    .gte('week_number', minWeek)
+    .lte('week_number', currentWeekNumber)
+    .order('week_number', { ascending: true })
+
+  return data?.map((w) => w.id) ?? []
+}
+
+/**
  * 이전 주차 지표 조회 (변동률 계산용)
  */
 export async function getPreviousIndicators(

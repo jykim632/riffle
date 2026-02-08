@@ -29,7 +29,7 @@ export function Sparkline({
     })
     .join(' ')
 
-  // 마지막 값이 첫 값보다 높으면 상승색
+  // 한국 관례: 상승=빨강, 하락=파랑
   const isUp = values[values.length - 1] >= values[0]
 
   return (
@@ -41,7 +41,7 @@ export function Sparkline({
     >
       <polyline
         fill="none"
-        stroke={isUp ? 'var(--color-green-500, #22c55e)' : 'var(--color-red-500, #ef4444)'}
+        stroke={isUp ? 'var(--color-red-500, #ef4444)' : 'var(--color-blue-500, #3b82f6)'}
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"

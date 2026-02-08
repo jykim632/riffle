@@ -1,6 +1,9 @@
 import { requireUser } from '@/lib/auth'
 import { getCurrentSeason, getCurrentWeek } from '@/lib/queries/season'
+import { getIndicatorsForWidget, getPreviousIndicators } from '@/lib/queries/indicators'
+import { WIDGET_INDICATOR_CODES } from '@/lib/ecos'
 import { Header } from '@/components/dashboard/header'
+import { IndicatorsTicker } from '@/components/dashboard/indicators-ticker'
 import { redirect } from 'next/navigation'
 import Script from 'next/script'
 
@@ -34,6 +37,14 @@ export default async function DashboardLayout({
     title: '주차 없음',
   }
 
+  // 경제지표 티커 데이터 (현재 + 이전 주차)
+  const [tickerIndicators, tickerPreviousIndicators] = currentWeek
+    ? await Promise.all([
+        getIndicatorsForWidget(supabase, currentWeek.id, WIDGET_INDICATOR_CODES),
+        getPreviousIndicators(supabase, currentWeek.id),
+      ])
+    : [[], []]
+
   return (
     <>
       <div className="min-h-screen bg-muted/30">
@@ -42,6 +53,7 @@ export default async function DashboardLayout({
           user={{ nickname: profile.nickname }}
           isAdmin={profile.role === 'admin'}
         />
+        <IndicatorsTicker indicators={tickerIndicators} previousIndicators={tickerPreviousIndicators} />
         <main>{children}</main>
       </div>
       <Script

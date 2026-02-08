@@ -1,56 +1,53 @@
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토']
+
 /**
- * 날짜 범위를 포맷팅합니다.
- * @param start - 시작 날짜 (YYYY-MM-DD)
- * @param end - 종료 날짜 (YYYY-MM-DD)
- * @returns "YYYY.MM.DD - MM.DD" 형식의 문자열
- * @example formatDateRange('2026-02-03', '2026-02-09') // "2026.02.03 - 02.09"
+ * 날짜 문자열 또는 Date 객체를 Date로 변환합니다.
+ * YYYY-MM-DD 형식의 문자열은 로컬 시간으로 파싱하여 타임존 이슈를 방지합니다.
  */
-export function formatDateRange(start: string, end: string): string {
-  const startDate = new Date(start)
-  const endDate = new Date(end)
-
-  const startFormatted = `${startDate.getFullYear()}.${String(
-    startDate.getMonth() + 1
-  ).padStart(2, '0')}.${String(startDate.getDate()).padStart(2, '0')}`
-
-  const endFormatted = `${String(endDate.getMonth() + 1).padStart(
-    2,
-    '0'
-  )}.${String(endDate.getDate()).padStart(2, '0')}`
-
-  return `${startFormatted} - ${endFormatted}`
+function toDate(date: string | Date): Date {
+  if (typeof date !== 'string') return date
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return new Date(date + 'T00:00:00')
+  // YYYYMMDD (ECOS API 등)
+  if (/^\d{8}$/.test(date)) return new Date(`${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T00:00:00`)
+  // YYYYMM
+  if (/^\d{6}$/.test(date)) return new Date(`${date.slice(0, 4)}-${date.slice(4, 6)}-01T00:00:00`)
+  return new Date(date)
 }
 
-/**
- * 날짜를 "YYYY.MM.DD HH:mm" 형식으로 포맷팅합니다.
- * @param date - 날짜 문자열 또는 Date 객체
- * @returns "YYYY.MM.DD HH:mm" 형식의 문자열
- * @example formatDateTime('2026-02-03T10:30:00Z') // "2026.02.03 10:30"
- */
-export function formatDateTime(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours = String(d.getHours()).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
-
-  return `${year}.${month}.${day} ${hours}:${minutes}`
+function pad(n: number): string {
+  return String(n).padStart(2, '0')
 }
 
-/**
- * 날짜를 "YYYY.MM.DD" 형식으로 포맷팅합니다.
- * @param date - 날짜 문자열 또는 Date 객체
- * @returns "YYYY.MM.DD" 형식의 문자열
- * @example formatDate('2026-02-03') // "2026.02.03"
- */
+/** YYYY-MM-DD */
 export function formatDate(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = toDate(date)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
 
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
+/** YYYY-MM-DD HH:mm */
+export function formatDateTime(date: string | Date): string {
+  const d = toDate(date)
+  return `${formatDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
-  return `${year}.${month}.${day}`
+/** MM-DD */
+export function formatShortDate(date: string | Date): string {
+  const d = toDate(date)
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** MM-DD (요일) */
+export function formatShortDateWithDay(date: string | Date): string {
+  const d = toDate(date)
+  return `${formatShortDate(d)} (${DAY_NAMES[d.getDay()]})`
+}
+
+/** YYYY-MM-DD ~ MM-DD */
+export function formatDateRange(start: string, end: string): string {
+  return `${formatDate(toDate(start))} ~ ${formatShortDate(toDate(end))}`
+}
+
+/** MM-DD ~ MM-DD */
+export function formatShortDateRange(start: string, end: string): string {
+  return `${formatShortDate(toDate(start))} ~ ${formatShortDate(toDate(end))}`
 }

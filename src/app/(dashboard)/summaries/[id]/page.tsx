@@ -1,12 +1,15 @@
 import { requireUser } from '@/lib/auth'
 import { normalizeRelation, getAuthorName } from '@/lib/utils/supabase'
+import { formatDate } from '@/lib/utils/date'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { ChevronLeft, MessageCircle } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SummaryContent } from '@/components/summary/summary-content'
 import { SummaryActions } from '@/components/summary/summary-actions'
+import { CommentList } from '@/components/comment/comment-list'
+import { CommentForm } from '@/components/comment/comment-form'
 
 interface Params {
   id: string
@@ -43,6 +46,15 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
 
   const hasMultipleVersions = allVersions && allVersions.length > 1
 
+  // 댓글 조회
+  const { data: commentsRaw } = await supabase
+    .from('comments')
+    .select('*, profiles(nickname)')
+    .eq('summary_id', params.id)
+    .order('created_at', { ascending: true })
+
+  const comments = commentsRaw ?? []
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       {/* 페이지 헤더 */}
@@ -65,7 +77,7 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
         <CardHeader>
           <CardDescription>
             작성자: {getAuthorName(summary.author_id, profiles?.nickname)} • 작성일:{' '}
-            {new Date(summary.created_at).toLocaleDateString('ko-KR')}
+            {formatDate(summary.created_at)}
           </CardDescription>
 
           {/* 버전 히스토리 */}
@@ -95,6 +107,22 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
         </CardHeader>
         <CardContent>
           <SummaryContent content={summary.content} />
+        </CardContent>
+      </Card>
+
+      {/* 댓글 섹션 */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="h-5 w-5" />
+            댓글 ({comments.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <CommentList comments={comments} currentUserId={user.id} />
+          <div className="border-t pt-4">
+            <CommentForm summaryId={params.id} />
+          </div>
         </CardContent>
       </Card>
     </div>

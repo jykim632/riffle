@@ -13,8 +13,7 @@ import {
 } from '@/components/ui/table'
 import { Copy, Trash2 } from 'lucide-react'
 import { deleteInviteCodeAction } from '@/lib/actions/admin/invite-codes'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import { formatDateTime } from '@/lib/utils/date'
 
 interface InviteCode {
   id: string
@@ -79,11 +78,9 @@ export function InviteCodesList({ codes }: InviteCodesListProps) {
         </TableHeader>
         <TableBody>
           {codes.map((code) => {
-            const createdAt = format(new Date(code.created_at), 'MM.dd HH:mm', {
-              locale: ko,
-            })
+            const createdAt = formatDateTime(code.created_at)
             const usedAt = code.used_at
-              ? format(new Date(code.used_at), 'MM.dd HH:mm', { locale: ko })
+              ? formatDateTime(code.used_at)
               : null
 
             return (
