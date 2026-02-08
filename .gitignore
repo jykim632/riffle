@@ -38,7 +38,8 @@ yarn-error.log*
 !.env.example
 
 # beads issue tracker
-.beads/
+.beads/*
+!.beads/issues.jsonl
 
 # sentry
 .sentryclirc
@@ -49,3 +50,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+ECOS/

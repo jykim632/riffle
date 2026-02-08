@@ -1,6 +1,11 @@
 import { requireUser } from '@/lib/auth'
 import { getCurrentSeason, getSeasonWeeks } from '@/lib/queries/season'
-import { getIndicatorsByWeek, getPreviousIndicators } from '@/lib/queries/indicators'
+import {
+  getIndicatorsByWeek,
+  getPreviousIndicators,
+  getIndicatorsHistoryBatch,
+  getRecentWeekIds,
+} from '@/lib/queries/indicators'
 import { EmptyState } from '@/components/empty-state'
 import { IndicatorsGrid } from '@/components/indicators/indicators-grid'
 import { IndicatorWeekSelect } from '@/components/indicators/week-select'
@@ -25,13 +30,23 @@ export default async function IndicatorsPage(props: { searchParams: Promise<Sear
   }
 
   // 선택된 주차 (기본: 현재 주차)
-  const selectedWeekId =
-    searchParams.week ?? weeks.find((w) => w.is_current)?.id ?? weeks[0].id
+  const selectedWeek = weeks.find((w) =>
+    searchParams.week ? w.id === searchParams.week : w.is_current
+  ) ?? weeks[0]
 
-  // 지표 데이터
-  const [indicators, previousIndicators] = await Promise.all([
-    getIndicatorsByWeek(supabase, selectedWeekId),
-    getPreviousIndicators(supabase, selectedWeekId),
+  // 스파크라인용 최근 주차 ID 목록
+  const recentWeekIds = await getRecentWeekIds(
+    supabase,
+    currentSeason.id,
+    selectedWeek.week_number,
+    8
+  )
+
+  // 지표 데이터 (현재 + 이전 + 히스토리) 병렬 조회
+  const [indicators, previousIndicators, historyMap] = await Promise.all([
+    getIndicatorsByWeek(supabase, selectedWeek.id),
+    getPreviousIndicators(supabase, selectedWeek.id),
+    getIndicatorsHistoryBatch(supabase, recentWeekIds),
   ])
 
   return (
@@ -45,7 +60,7 @@ export default async function IndicatorsPage(props: { searchParams: Promise<Sear
               주요 거시경제 지표를 한눈에 확인하세요
             </p>
           </div>
-          <IndicatorWeekSelect weeks={weeks} currentWeekId={selectedWeekId} />
+          <IndicatorWeekSelect weeks={weeks} currentWeekId={selectedWeek.id} />
         </div>
 
         {/* 지표 그리드 */}
@@ -53,7 +68,7 @@ export default async function IndicatorsPage(props: { searchParams: Promise<Sear
           <IndicatorsGrid
             indicators={indicators}
             previousIndicators={previousIndicators}
-            historyMap={{}}
+            historyMap={historyMap}
           />
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">

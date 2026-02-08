@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RefreshIndicatorsButton } from '@/components/admin/indicators/refresh-button'
 import { INDICATOR_MAP } from '@/lib/ecos'
+import { formatDate, formatDateTime } from '@/lib/utils/date'
 
 export default async function AdminIndicatorsPage() {
   const supabase = await createClient()
@@ -73,7 +74,7 @@ export default async function AdminIndicatorsPage() {
           <CardHeader>
             <CardTitle className="text-base">현재 주차 수집 데이터</CardTitle>
             <CardDescription>
-              마지막 수집: {new Date(indicators[0].fetched_at).toLocaleString('ko-KR')}
+              마지막 수집: {formatDateTime(indicators[0].fetched_at)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -102,7 +103,7 @@ export default async function AdminIndicatorsPage() {
                           {ind.unit_name ?? def?.unit ?? '-'}
                         </td>
                         <td className="py-2 text-muted-foreground">
-                          {ind.time_label}
+                          {formatDate(ind.time_label)}
                         </td>
                       </tr>
                     )

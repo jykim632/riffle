@@ -14,8 +14,7 @@ import {
 import { Users } from 'lucide-react'
 import { toggleSeasonActiveAction } from '@/lib/actions/admin/seasons'
 import { Database } from '@/lib/types/database'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import { formatDate } from '@/lib/utils/date'
 import { ManageMembersDialog } from './manage-members-dialog'
 
 type Season = Database['public']['Tables']['seasons']['Row'] & {
@@ -65,12 +64,8 @@ export function SeasonsList({ seasons }: SeasonsListProps) {
         </TableHeader>
         <TableBody>
           {seasons.map((season) => {
-            const startDate = format(new Date(season.start_date), 'yyyy.MM.dd', {
-              locale: ko,
-            })
-            const endDate = format(new Date(season.end_date), 'yyyy.MM.dd', {
-              locale: ko,
-            })
+            const startDate = formatDate(season.start_date)
+            const endDate = formatDate(season.end_date)
 
             return (
               <TableRow key={season.id}>

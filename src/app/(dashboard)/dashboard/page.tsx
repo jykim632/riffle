@@ -1,15 +1,15 @@
 import { requireUser } from '@/lib/auth'
 import { getCurrentSeason, getCurrentWeek } from '@/lib/queries/season'
+import { getIndicatorsForWidget, getPreviousIndicators } from '@/lib/queries/indicators'
+import { WIDGET_INDICATOR_CODES } from '@/lib/ecos'
 import { normalizeRelation } from '@/lib/utils/supabase'
 import { EmptyState } from '@/components/empty-state'
 import { WeekOverview } from '@/components/dashboard/week-overview'
 import { CurrentWeekSummaries } from '@/components/dashboard/current-week-summaries'
 import { SeasonBanner } from '@/components/dashboard/season-banner'
-import { IndicatorsWidget } from '@/components/dashboard/indicators-widget'
+import { MarketSummaryWidget } from '@/components/dashboard/market-summary-widget'
 import { isCurrentSeasonMember, isAdmin } from '@/lib/utils/season-membership'
 import { NonMemberAlert } from '@/components/season/non-member-alert'
-import { getIndicatorsForWidget } from '@/lib/queries/indicators'
-import { WIDGET_INDICATOR_CODES } from '@/lib/ecos'
 
 export default async function DashboardPage() {
   const { supabase, user } = await requireUser()
@@ -29,11 +29,17 @@ export default async function DashboardPage() {
     return <EmptyState title="현재 주차가 없어요" description="관리자에게 주차 생성을 요청하세요." />
   }
 
-  // 4. 멤버십 확인
+  // 4. 시장 요약 위젯용 데이터
+  const [widgetIndicators, widgetPreviousIndicators] = await Promise.all([
+    getIndicatorsForWidget(supabase, currentWeek.id, WIDGET_INDICATOR_CODES),
+    getPreviousIndicators(supabase, currentWeek.id),
+  ])
+
+  // 5. 멤버십 확인
   const member = await isCurrentSeasonMember(user.id)
   const admin = await isAdmin(user.id)
 
-  // 5. 내 제출 현황
+  // 6. 내 제출 현황
   const { data: mySubmission } = await supabase
     .from('summaries')
     .select('created_at')
@@ -41,7 +47,7 @@ export default async function DashboardPage() {
     .eq('author_id', user.id)
     .maybeSingle()
 
-  // 6. 전체 제출 현황
+  // 7. 전체 제출 현황
   const { data: allProfiles } = await supabase
     .from('profiles')
     .select('id, nickname')
@@ -62,7 +68,7 @@ export default async function DashboardPage() {
   const totalMembers = submissionsStatus.length
   const submittedCount = submissionsStatus.filter((s) => s.has_submitted).length
 
-  // 7. 시즌 전체 주차 수 + 멤버 수
+  // 8. 시즌 전체 주차 수 + 멤버 수
   const [{ count: totalWeeks }, { data: seasonMembers }] = await Promise.all([
     supabase
       .from('weeks')
@@ -80,13 +86,6 @@ export default async function DashboardPage() {
       return profile?.nickname ?? '알 수 없음'
     })
     .sort() ?? []
-
-  // 8. 경제지표 위젯용 데이터
-  const widgetIndicators = await getIndicatorsForWidget(
-    supabase,
-    currentWeek.id,
-    WIDGET_INDICATOR_CODES
-  )
 
   // 9. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
   const { data: currentWeekSummariesRaw } = await supabase
@@ -127,6 +126,12 @@ export default async function DashboardPage() {
           members={memberNicknames}
         />
 
+        {/* 시장 요약 */}
+        <MarketSummaryWidget
+          indicators={widgetIndicators}
+          previousIndicators={widgetPreviousIndicators}
+        />
+
         {/* 기존 2칸 그리드 */}
         <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
           <WeekOverview
@@ -141,9 +146,6 @@ export default async function DashboardPage() {
             weekId={currentWeek.id}
           />
         </div>
-
-        {/* 경제지표 위젯 */}
-        <IndicatorsWidget indicators={widgetIndicators} />
 
       </div>
     </div>

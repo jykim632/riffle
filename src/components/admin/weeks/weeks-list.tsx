@@ -13,8 +13,7 @@ import {
 } from '@/components/ui/table'
 import { toggleWeekCurrentAction } from '@/lib/actions/admin/weeks'
 import { Database } from '@/lib/types/database'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import { formatShortDateWithDay } from '@/lib/utils/date'
 
 type Week = Database['public']['Tables']['weeks']['Row']
 
@@ -60,12 +59,8 @@ export function WeeksList({ weeks }: WeeksListProps) {
         </TableHeader>
         <TableBody>
           {weeks.map((week) => {
-            const startDate = format(new Date(week.start_date), 'MM.dd (EEE)', {
-              locale: ko,
-            })
-            const endDate = format(new Date(week.end_date), 'MM.dd (EEE)', {
-              locale: ko,
-            })
+            const startDate = formatShortDateWithDay(week.start_date)
+            const endDate = formatShortDateWithDay(week.end_date)
 
             return (
               <TableRow key={week.id}>

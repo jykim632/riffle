@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { updateNicknameSchema, type UpdateNicknameInput } from '@/lib/schemas'
 import { updateNickname } from '@/actions/profile'
+import { formatDate } from '@/lib/utils/date'
 import Link from 'next/link'
 import { Loader2, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -63,18 +64,7 @@ export function ProfileForm({ email, nickname, role, createdAt, hasPassword, sea
 
   const roleLabel = role === 'admin' ? '관리자' : '멤버'
 
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-
-  const formattedDate = new Date(createdAt).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  const formattedDate = formatDate(createdAt)
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
