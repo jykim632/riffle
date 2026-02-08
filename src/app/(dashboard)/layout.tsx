@@ -55,13 +55,13 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-muted/30">
         <Header
           currentWeek={weekInfo}
           user={{ nickname: profile.nickname }}
           isAdmin={profile.role === 'admin'}
         />
-        <main className="bg-muted/30">{children}</main>
+        <main>{children}</main>
       </div>
       <Script
         src="https://cdn.sori.life/widget.js"
