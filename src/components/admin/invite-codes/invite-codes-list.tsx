@@ -14,6 +14,7 @@ import {
 import { Copy, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { deleteInviteCodeAction } from '@/lib/actions/admin/invite-codes'
+import { toast } from 'sonner'
 import { formatDateTime } from '@/lib/utils/date'
 
 interface InviteCode {
@@ -45,10 +46,10 @@ export function InviteCodesList({ codes }: InviteCodesListProps) {
     try {
       const result = await deleteInviteCodeAction(codeId)
       if (!result.success) {
-        alert(`삭제 실패: ${result.error}`)
+        toast.error(`삭제 실패: ${result.error}`)
       }
     } catch {
-      alert('삭제 중 오류 발생')
+      toast.error('삭제 중 오류 발생')
     } finally {
       setLoading(null)
     }

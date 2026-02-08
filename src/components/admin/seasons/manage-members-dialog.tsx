@@ -18,6 +18,7 @@ import {
   removeSeasonMemberAction,
 } from '@/lib/actions/admin/seasons'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
 interface Member {
   id: string
@@ -64,7 +65,7 @@ export function ManageMembersDialog({
         new Set((seasonMembers || []).map((sm) => sm.user_id))
       )
     } catch {
-      alert('멤버 목록 로드 실패')
+      toast.error('멤버 목록 로드 실패')
     } finally {
       setLoading(false)
     }
@@ -117,7 +118,7 @@ export function ManageMembersDialog({
       if (toAdd.length > 0) {
         const result = await addSeasonMembersAction(seasonId, toAdd)
         if (!result.success) {
-          alert(`멤버 추가 실패: ${result.error}`)
+          toast.error(`멤버 추가 실패: ${result.error}`)
           return
         }
       }
@@ -126,14 +127,14 @@ export function ManageMembersDialog({
       for (const userId of toRemove) {
         const result = await removeSeasonMemberAction(seasonId, userId)
         if (!result.success) {
-          alert(`멤버 제거 실패: ${result.error}`)
+          toast.error(`멤버 제거 실패: ${result.error}`)
           return
         }
       }
 
       setOpen(false)
     } catch {
-      alert('멤버 관리 중 오류 발생')
+      toast.error('멤버 관리 중 오류 발생')
     } finally {
       setIsSubmitting(false)
     }

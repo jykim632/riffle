@@ -25,6 +25,7 @@ import {
   deleteUserAccountAction,
 } from '@/lib/actions/admin/members'
 import { formatDate } from '@/lib/utils/date'
+import { toast } from 'sonner'
 import { KeyRound, Trash2 } from 'lucide-react'
 
 interface MemberWithSeasons {
@@ -51,12 +52,12 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
     try {
       const result = await deleteUserAccountAction(userId)
       if (result.success) {
-        alert('계정이 삭제되었습니다.')
+        toast.success('계정이 삭제되었습니다.')
       } else {
-        alert(`계정 삭제 실패: ${result.error}`)
+        toast.error(`계정 삭제 실패: ${result.error}`)
       }
     } catch {
-      alert('계정 삭제 중 오류 발생')
+      toast.error('계정 삭제 중 오류 발생')
     } finally {
       setDeleting(null)
     }
@@ -67,12 +68,12 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
     try {
       const result = await resetMemberPasswordAction(userId)
       if (result.success) {
-        alert('비밀번호가 초기화되었습니다.')
+        toast.success('비밀번호가 초기화되었습니다.')
       } else {
-        alert(`비밀번호 초기화 실패: ${result.error}`)
+        toast.error(`비밀번호 초기화 실패: ${result.error}`)
       }
     } catch {
-      alert('비밀번호 초기화 중 오류 발생')
+      toast.error('비밀번호 초기화 중 오류 발생')
     } finally {
       setResetting(null)
     }
@@ -83,10 +84,10 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
     try {
       const result = await updateMemberRoleAction(userId, newRole)
       if (!result.success) {
-        alert(`역할 변경 실패: ${result.error}`)
+        toast.error(`역할 변경 실패: ${result.error}`)
       }
     } catch {
-      alert('역할 변경 중 오류 발생')
+      toast.error('역할 변경 중 오류 발생')
     } finally {
       setLoading(null)
     }

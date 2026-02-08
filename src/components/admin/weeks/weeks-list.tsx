@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toggleWeekCurrentAction } from '@/lib/actions/admin/weeks'
+import { toast } from 'sonner'
 import { Database } from '@/lib/types/database'
 import { formatShortDateWithDay } from '@/lib/utils/date'
 
@@ -29,10 +30,10 @@ export function WeeksList({ weeks }: WeeksListProps) {
     try {
       const result = await toggleWeekCurrentAction(weekId, !currentState)
       if (!result.success) {
-        alert(`현재 주차 변경 실패: ${result.error}`)
+        toast.error(`현재 주차 변경 실패: ${result.error}`)
       }
     } catch {
-      alert('현재 주차 변경 중 오류 발생')
+      toast.error('현재 주차 변경 중 오류 발생')
     } finally {
       setLoading(null)
     }
@@ -47,7 +48,7 @@ export function WeeksList({ weeks }: WeeksListProps) {
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>

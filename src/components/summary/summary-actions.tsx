@@ -6,6 +6,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { deleteSummary } from '@/actions/summaries'
+import { toast } from 'sonner'
 
 interface SummaryActionsProps {
   summaryId: string
@@ -27,7 +28,7 @@ export function SummaryActions({ summaryId, isAuthor }: SummaryActionsProps) {
     const result = await deleteSummary(formData)
 
     if (result?.error) {
-      alert(result.error)
+      toast.error(result.error)
       setLoading(false)
       setOpen(false)
     }

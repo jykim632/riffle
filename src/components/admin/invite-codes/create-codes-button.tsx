@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus, Loader2 } from 'lucide-react'
 import { createInviteCodeAction } from '@/lib/actions/admin/invite-codes'
+import { toast } from 'sonner'
 
 export function CreateCodesButton() {
   const [loading, setLoading] = useState(false)
@@ -13,10 +14,10 @@ export function CreateCodesButton() {
     try {
       const result = await createInviteCodeAction(count)
       if (!result.success) {
-        alert(`생성 실패: ${result.error}`)
+        toast.error(`생성 실패: ${result.error}`)
       }
     } catch {
-      alert('생성 중 오류 발생')
+      toast.error('생성 중 오류 발생')
     } finally {
       setLoading(false)
     }

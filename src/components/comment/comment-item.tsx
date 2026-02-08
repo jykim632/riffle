@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { updateComment, deleteComment } from '@/actions/comments'
+import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils/date'
 
 interface CommentItemProps {
@@ -57,7 +58,7 @@ export function CommentItem({ comment, isAuthor }: CommentItemProps) {
     const result = await deleteComment(formData)
 
     if (result?.error) {
-      alert(result.error)
+      toast.error(result.error)
       setLoading(false)
     }
   }
