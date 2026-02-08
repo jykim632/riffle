@@ -2,6 +2,18 @@
 
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import {
   Select,
   SelectContent,
@@ -17,9 +29,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { updateMemberRoleAction } from '@/lib/actions/admin/members'
+import {
+  updateMemberRoleAction,
+  resetMemberPasswordAction,
+} from '@/lib/actions/admin/members'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { KeyRound } from 'lucide-react'
 
 interface MemberWithSeasons {
   id: string
@@ -27,6 +43,7 @@ interface MemberWithSeasons {
   role: 'admin' | 'member'
   created_at: string
   seasons: string[]
+  hasPassword: boolean
 }
 
 interface MembersListProps {
@@ -36,6 +53,23 @@ interface MembersListProps {
 
 export function MembersList({ members, currentUserId }: MembersListProps) {
   const [loading, setLoading] = useState<string | null>(null)
+  const [resetting, setResetting] = useState<string | null>(null)
+
+  const handlePasswordReset = async (userId: string) => {
+    setResetting(userId)
+    try {
+      const result = await resetMemberPasswordAction(userId)
+      if (result.success) {
+        alert('비밀번호가 초기화되었습니다.')
+      } else {
+        alert(`비밀번호 초기화 실패: ${result.error}`)
+      }
+    } catch {
+      alert('비밀번호 초기화 중 오류 발생')
+    } finally {
+      setResetting(null)
+    }
+  }
 
   const handleRoleChange = async (userId: string, newRole: 'admin' | 'member') => {
     setLoading(userId)
@@ -68,6 +102,7 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
             <TableHead>가입일</TableHead>
             <TableHead>소속 시즌</TableHead>
             <TableHead className="w-32">역할</TableHead>
+            <TableHead className="w-24">관리</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -115,6 +150,37 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
                       <SelectItem value="member">멤버</SelectItem>
                     </SelectContent>
                   </Select>
+                </TableCell>
+                <TableCell>
+                  {member.hasPassword && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={resetting === member.id}
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>비밀번호 초기화</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            정말 {member.nickname}님의 비밀번호를 초기화하시겠습니까?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handlePasswordReset(member.id)}
+                          >
+                            초기화
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </TableCell>
               </TableRow>
             )
