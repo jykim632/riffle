@@ -8,10 +8,21 @@ interface RateLimitOptions {
   windowMs: number
 }
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
+let redis: Redis | null = null
+
+function getRedis(): Redis {
+  if (!redis) {
+    const url = process.env.UPSTASH_REDIS_REST_URL?.trim()
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim()
+    if (!url || !token) {
+      throw new Error(
+        'UPSTASH_REDIS_REST_URL 및 UPSTASH_REDIS_REST_TOKEN 환경변수가 필요합니다.'
+      )
+    }
+    redis = new Redis({ url, token })
+  }
+  return redis
+}
 
 const limiters = new Map<string, Ratelimit>()
 
@@ -20,7 +31,7 @@ function getLimiter(limit: number, windowMs: number): Ratelimit {
   let limiter = limiters.get(key)
   if (!limiter) {
     limiter = new Ratelimit({
-      redis,
+      redis: getRedis(),
       limiter: Ratelimit.slidingWindow(limit, `${windowMs} ms`),
     })
     limiters.set(key, limiter)
