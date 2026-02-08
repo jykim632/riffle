@@ -127,10 +127,13 @@ export async function signup(formData: FormData) {
   })
 
   if (!acquired) {
+    // 초대 코드 사용 실패 → 생성된 계정 정리
     console.error('초대 코드 사용 실패 (이미 사용됨):', {
       code: inviteCode,
       userId: authData.user.id,
     })
+    await adminClient.auth.admin.deleteUser(authData.user.id)
+    return { error: '초대 코드가 이미 사용되었습니다. 다른 코드를 사용해주세요.' }
   }
 
   return { success: true, email }
