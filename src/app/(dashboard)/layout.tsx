@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/auth'
+import { getCurrentSeason, getCurrentWeek } from '@/lib/queries/season'
 import { Header } from '@/components/dashboard/header'
 import { redirect } from 'next/navigation'
 import Script from 'next/script'
@@ -8,16 +9,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-
-  // 현재 사용자 조회
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   // 사용자 프로필 조회
   const { data: profile } = await supabase
@@ -30,22 +22,11 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  // 현재 시즌 조회
-  const { data: currentSeason } = await supabase
-    .from('seasons')
-    .select('id')
-    .eq('is_active', true)
-    .maybeSingle()
-
-  // 현재 주차 조회 (현재 시즌 내)
-  const { data: currentWeek } = currentSeason
-    ? await supabase
-        .from('weeks')
-        .select('week_number, title')
-        .eq('season_id', currentSeason.id)
-        .eq('is_current', true)
-        .maybeSingle()
-    : { data: null }
+  // 현재 시즌 + 주차 조회
+  const currentSeason = await getCurrentSeason(supabase)
+  const currentWeek = currentSeason
+    ? await getCurrentWeek(supabase, currentSeason.id)
+    : null
 
   // 현재 주차가 없으면 기본값 사용
   const weekInfo = currentWeek || {

@@ -1,14 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { ProfileForm } from './profile-form'
 
 export default async function ProfilePage() {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   const { data: profile } = await supabase
     .from('profiles')

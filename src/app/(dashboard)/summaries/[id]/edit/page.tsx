@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/auth'
+import { getCurrentSeason, getSeasonWeeks } from '@/lib/queries/season'
 import { redirect, notFound } from 'next/navigation'
 import { SummaryForm } from '@/components/summary/summary-form'
 import { isSeasonMember, isAdmin } from '@/lib/utils/season-membership'
@@ -10,16 +11,7 @@ interface Params {
 
 export default async function EditSummaryPage(props: { params: Promise<Params> }) {
   const params = await props.params
-  const supabase = await createClient()
-
-  // 1. 현재 사용자 확인
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   // 2. 요약본 조회 (시즌 정보 포함)
   const { data: summaryRaw, error } = await supabase
@@ -69,11 +61,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
   }
 
   // 5. 현재 시즌 확인
-  const { data: currentSeason } = await supabase
-    .from('seasons')
-    .select('id')
-    .eq('is_active', true)
-    .maybeSingle()
+  const currentSeason = await getCurrentSeason(supabase)
 
   if (!currentSeason) {
     return (
@@ -87,13 +75,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
   }
 
   // 6. 시즌 전체 주차 조회
-  const { data: recentWeeks } = await supabase
-    .from('weeks')
-    .select('id, season_id, week_number, title, start_date, end_date, is_current')
-    .eq('season_id', currentSeason.id)
-    .order('week_number', { ascending: true })
-
-  let weeks = recentWeeks || []
+  let weeks = await getSeasonWeeks(supabase, currentSeason.id)
 
   // 7. 엣지케이스: 현재 week_id가 최근 4주에 없으면 추가 조회 (다른 시즌 주차일 수도 있음)
   const currentWeekId = summary.week_id

@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
+import { requireUser } from '@/lib/auth'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
@@ -13,16 +13,7 @@ interface Params {
 
 export default async function SummaryDetailPage(props: { params: Promise<Params> }) {
   const params = await props.params
-  const supabase = await createClient()
-
-  // 1. 현재 사용자 확인
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   // 2. 요약본 조회 (JOIN: weeks, profiles)
   const { data: summary, error } = await supabase

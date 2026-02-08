@@ -2,8 +2,8 @@
 
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { loginSchema, signupSchema } from '@/lib/schemas'
 import { rateLimit } from '@/lib/rate-limit'
 
@@ -81,16 +81,7 @@ export async function signup(formData: FormData) {
   const { email, password, nickname, inviteCode } = validationResult.data
 
   // 1. service_role로 초대 코드 검증 (RLS 우회)
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  )
+  const adminClient = createAdminClient()
 
   const { data: code } = await adminClient
     .from('invite_codes')

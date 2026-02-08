@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireUser } from '@/lib/auth'
+import { getCurrentSeason, getSeasonWeeks } from '@/lib/queries/season'
 import Link from 'next/link'
 import { Pencil, CircleCheck, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -21,34 +21,15 @@ interface SearchParams {
 
 export default async function SummariesPage(props: { searchParams: Promise<SearchParams> }) {
   const searchParams = await props.searchParams
-  const supabase = await createClient()
-
-  // 1. 현재 사용자 확인
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   const isMineFilter = searchParams.filter === 'mine'
 
-  // 2. 현재 시즌 조회
-  const { data: currentSeason } = await supabase
-    .from('seasons')
-    .select('id')
-    .eq('is_active', true)
-    .maybeSingle()
-
-  // 3. 주차 목록 조회 (필터용, 현재 시즌만)
-  const { data: weeks } = currentSeason
-    ? await supabase
-        .from('weeks')
-        .select('id, season_id, week_number, title, start_date, end_date')
-        .eq('season_id', currentSeason.id)
-        .order('week_number', { ascending: false })
-    : { data: [] }
+  // 2. 현재 시즌 + 주차 목록 조회
+  const currentSeason = await getCurrentSeason(supabase)
+  const weeks = currentSeason
+    ? await getSeasonWeeks(supabase, currentSeason.id, false)
+    : []
 
   // 4. 요약본 목록 조회 (latest_summaries 뷰 사용)
   let query = supabase

@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireUser } from '@/lib/auth'
+import { getCurrentSeason, getCurrentWeek } from '@/lib/queries/season'
 import { WeekOverview } from '@/components/dashboard/week-overview'
 import { CurrentWeekSummaries } from '@/components/dashboard/current-week-summaries'
 import { SeasonBanner } from '@/components/dashboard/season-banner'
@@ -7,23 +7,10 @@ import { isCurrentSeasonMember, isAdmin } from '@/lib/utils/season-membership'
 import { NonMemberAlert } from '@/components/season/non-member-alert'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-
-  // 1. 현재 사용자 조회
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   // 2. 현재 시즌 조회
-  const { data: currentSeason } = await supabase
-    .from('seasons')
-    .select('*')
-    .eq('is_active', true)
-    .maybeSingle()
+  const currentSeason = await getCurrentSeason(supabase)
 
   if (!currentSeason) {
     return (
@@ -39,12 +26,7 @@ export default async function DashboardPage() {
   }
 
   // 3. 현재 주차 조회 (현재 시즌 내)
-  const { data: currentWeek } = await supabase
-    .from('weeks')
-    .select('*')
-    .eq('season_id', currentSeason.id)
-    .eq('is_current', true)
-    .maybeSingle()
+  const currentWeek = await getCurrentWeek(supabase, currentSeason.id)
 
   // 현재 주차가 없으면 빈 상태 표시
   if (!currentWeek) {

@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireUser } from '@/lib/auth'
+import { getCurrentSeason, getCurrentWeek, getSeasonWeeks } from '@/lib/queries/season'
 import { SummaryForm } from '@/components/summary/summary-form'
 import { isCurrentSeasonMember, isAdmin } from '@/lib/utils/season-membership'
 import { AccessDeniedPage } from '@/components/season/access-denied-page'
@@ -10,23 +10,10 @@ interface SearchParams {
 
 export default async function NewSummaryPage(props: { searchParams: Promise<SearchParams> }) {
   const searchParams = await props.searchParams
-  const supabase = await createClient()
-
-  // 1. 현재 사용자 확인
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const { supabase, user } = await requireUser()
 
   // 2. 현재 시즌 확인
-  const { data: currentSeason } = await supabase
-    .from('seasons')
-    .select('id')
-    .eq('is_active', true)
-    .maybeSingle()
+  const currentSeason = await getCurrentSeason(supabase)
 
   if (!currentSeason) {
     return (
@@ -55,12 +42,7 @@ export default async function NewSummaryPage(props: { searchParams: Promise<Sear
   }
 
   // 4. 현재 주차 확인 (기본값 결정용)
-  const { data: currentWeek } = await supabase
-    .from('weeks')
-    .select('id')
-    .eq('season_id', currentSeason.id)
-    .eq('is_current', true)
-    .maybeSingle()
+  const currentWeek = await getCurrentWeek(supabase, currentSeason.id)
 
   if (!currentWeek) {
     return (
@@ -76,13 +58,9 @@ export default async function NewSummaryPage(props: { searchParams: Promise<Sear
   }
 
   // 5. 시즌 전체 주차 조회
-  const { data: weeks } = await supabase
-    .from('weeks')
-    .select('id, season_id, week_number, title, start_date, end_date, is_current')
-    .eq('season_id', currentSeason.id)
-    .order('week_number', { ascending: true })
+  const weeks = await getSeasonWeeks(supabase, currentSeason.id)
 
-  if (!weeks || weeks.length === 0) {
+  if (weeks.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center py-12 text-center">
