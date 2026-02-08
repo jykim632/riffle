@@ -79,18 +79,50 @@ export async function toggleSeasonActiveAction(sid: string, isActive: boolean) {
   if (!auth.authorized) return auth.response
 
   if (isActive) {
-    // 활성화하려는 경우: 기존 활성 시즌을 비활성화
-    await auth.supabase.from('seasons').update({ is_active: false }).eq('is_active', true)
-  }
+    // 활성화하려는 경우: 기존 활성 시즌을 확인하고 비활성화
+    const { data: currentActive } = await auth.supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .maybeSingle()
 
-  // 선택한 시즌을 활성화/비활성화
-  const { error } = await auth.supabase
-    .from('seasons')
-    .update({ is_active: isActive })
-    .eq('id', sid)
+    if (currentActive) {
+      const { error: deactivateError } = await auth.supabase
+        .from('seasons')
+        .update({ is_active: false })
+        .eq('id', currentActive.id)
 
-  if (error) {
-    return { success: false, error: '시즌 활성화 변경에 실패했습니다.' }
+      if (deactivateError) {
+        return { success: false, error: '기존 시즌 비활성화에 실패했습니다.' }
+      }
+    }
+
+    // 선택한 시즌을 활성화
+    const { error } = await auth.supabase
+      .from('seasons')
+      .update({ is_active: true })
+      .eq('id', sid)
+
+    if (error) {
+      // 롤백: 이전 활성 시즌 복원
+      if (currentActive) {
+        await auth.supabase
+          .from('seasons')
+          .update({ is_active: true })
+          .eq('id', currentActive.id)
+      }
+      return { success: false, error: '시즌 활성화에 실패했습니다.' }
+    }
+  } else {
+    // 비활성화
+    const { error } = await auth.supabase
+      .from('seasons')
+      .update({ is_active: false })
+      .eq('id', sid)
+
+    if (error) {
+      return { success: false, error: '시즌 비활성화에 실패했습니다.' }
+    }
   }
 
   revalidatePath('/admin/seasons')

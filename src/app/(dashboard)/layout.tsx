@@ -24,7 +24,7 @@ export default async function DashboardLayout({
     .from('profiles')
     .select('nickname, role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!profile) {
     redirect('/login')

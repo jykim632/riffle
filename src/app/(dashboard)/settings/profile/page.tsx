@@ -14,7 +14,7 @@ export default async function ProfilePage() {
     .from('profiles')
     .select('nickname, role, created_at')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!profile) {
     redirect('/dashboard')

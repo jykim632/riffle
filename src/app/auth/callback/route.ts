@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('id')
       .eq('id', data.user.id)
-      .single()
+      .maybeSingle()
 
     // 신규 사용자인 경우 초대 코드 검증
     if (!profile && inviteCode) {
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         .select()
         .eq('code', inviteCode.toUpperCase())
         .eq('is_used', false)
-        .single()
+        .maybeSingle()
 
       if (!codeData) {
         // 초대 코드 없음 - 계정 삭제하고 에러

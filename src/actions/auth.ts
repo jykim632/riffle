@@ -16,6 +16,11 @@ async function getClientIp(): Promise<string> {
 
 // 로그인
 export async function login(formData: FormData) {
+  const ip = await getClientIp()
+  if (rateLimit(`login:${ip}`, { limit: 10, windowMs: 60_000 }).limited) {
+    return { error: RATE_LIMIT_ERROR }
+  }
+
   const rawData = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
@@ -92,7 +97,7 @@ export async function signup(formData: FormData) {
     .select()
     .eq('code', inviteCode.toUpperCase())
     .eq('is_used', false)
-    .single()
+    .maybeSingle()
 
   if (!code) {
     return { error: '유효하지 않은 초대 코드입니다.' }

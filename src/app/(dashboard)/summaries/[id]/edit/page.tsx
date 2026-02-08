@@ -49,7 +49,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
 
   // 3. 본인 확인 (RLS가 막지만 UI에서도 체크)
   if (summary.author_id !== user.id) {
-    redirect(`/mine/${params.id}`)
+    redirect(`/summaries/${params.id}`)
   }
 
   // 4. 멤버십 확인 (관리자는 항상 허용)
@@ -104,7 +104,7 @@ export default async function EditSummaryPage(props: { params: Promise<Params> }
       .from('weeks')
       .select('id, season_id, week_number, title, start_date, end_date, is_current')
       .eq('id', currentWeekId)
-      .single()
+      .maybeSingle()
 
     if (currentWeek) {
       weeks = [currentWeek, ...weeks]
