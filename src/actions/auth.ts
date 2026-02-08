@@ -14,7 +14,7 @@ const RATE_LIMIT_ERROR = '요청이 너무 많습니다. 잠시 후 다시 시�
 // 로그인
 export async function login(formData: FormData) {
   const ip = await getClientIp()
-  if (rateLimit(`login:${ip}`, { limit: 10, windowMs: 60_000 }).limited) {
+  if ((await rateLimit(`login:${ip}`, { limit: 10, windowMs: 60_000 })).limited) {
     return { error: RATE_LIMIT_ERROR }
   }
 
@@ -54,7 +54,7 @@ export async function logout() {
 // 회원가입
 export async function signup(formData: FormData) {
   const ip = await getClientIp()
-  if (rateLimit(`signup:${ip}`, { limit: 5, windowMs: 60_000 }).limited) {
+  if ((await rateLimit(`signup:${ip}`, { limit: 5, windowMs: 60_000 })).limited) {
     return { error: RATE_LIMIT_ERROR }
   }
 

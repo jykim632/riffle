@@ -9,3 +9,6 @@ export * from './profile'
 
 // Invite code schemas
 export * from './invite-code'
+
+// Indicator schemas
+export * from './indicator'

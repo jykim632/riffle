@@ -162,6 +162,41 @@ export interface Database {
           updated_at?: string
         }
       }
+      economic_indicators: {
+        Row: {
+          id: string
+          indicator_code: string
+          stat_code: string
+          item_code: string
+          data_value: number
+          unit_name: string | null
+          time_label: string
+          week_id: string | null
+          fetched_at: string
+        }
+        Insert: {
+          id?: string
+          indicator_code: string
+          stat_code: string
+          item_code: string
+          data_value: number
+          unit_name?: string | null
+          time_label: string
+          week_id?: string | null
+          fetched_at?: string
+        }
+        Update: {
+          id?: string
+          indicator_code?: string
+          stat_code?: string
+          item_code?: string
+          data_value?: number
+          unit_name?: string | null
+          time_label?: string
+          week_id?: string | null
+          fetched_at?: string
+        }
+      }
     }
     Views: {
       latest_summaries: {
@@ -172,6 +207,19 @@ export interface Database {
           content: string
           created_at: string
           updated_at: string
+        }
+      }
+      indicator_snapshots: {
+        Row: {
+          id: string
+          indicator_code: string
+          stat_code: string
+          item_code: string
+          data_value: number
+          unit_name: string | null
+          time_label: string
+          week_id: string | null
+          fetched_at: string
         }
       }
       first_summaries: {
