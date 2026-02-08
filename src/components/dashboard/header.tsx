@@ -39,6 +39,12 @@ export function Header({ currentWeek, user, isAdmin = false }: HeaderProps) {
           >
             게시판
           </Link>
+          <Link
+            href="/indicators"
+            className="transition-colors hover:text-primary"
+          >
+            경제지표
+          </Link>
           {isAdmin && (
             <Link
               href="/admin/seasons"

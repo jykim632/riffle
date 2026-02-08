@@ -5,8 +5,11 @@ import { EmptyState } from '@/components/empty-state'
 import { WeekOverview } from '@/components/dashboard/week-overview'
 import { CurrentWeekSummaries } from '@/components/dashboard/current-week-summaries'
 import { SeasonBanner } from '@/components/dashboard/season-banner'
+import { IndicatorsWidget } from '@/components/dashboard/indicators-widget'
 import { isCurrentSeasonMember, isAdmin } from '@/lib/utils/season-membership'
 import { NonMemberAlert } from '@/components/season/non-member-alert'
+import { getIndicatorsForWidget } from '@/lib/queries/indicators'
+import { WIDGET_INDICATOR_CODES } from '@/lib/ecos'
 
 export default async function DashboardPage() {
   const { supabase, user } = await requireUser()
@@ -78,7 +81,14 @@ export default async function DashboardPage() {
     })
     .sort() ?? []
 
-  // 8. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
+  // 8. 경제지표 위젯용 데이터
+  const widgetIndicators = await getIndicatorsForWidget(
+    supabase,
+    currentWeek.id,
+    WIDGET_INDICATOR_CODES
+  )
+
+  // 9. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
   const { data: currentWeekSummariesRaw } = await supabase
     .from('first_summaries')
     .select('id, author_id, content, created_at, profiles(nickname)')
@@ -131,6 +141,9 @@ export default async function DashboardPage() {
             weekId={currentWeek.id}
           />
         </div>
+
+        {/* 경제지표 위젯 */}
+        <IndicatorsWidget indicators={widgetIndicators} />
 
       </div>
     </div>
