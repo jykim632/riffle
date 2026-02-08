@@ -12,6 +12,7 @@ interface HeaderProps {
   }
   user: {
     nickname: string
+    hasPassword?: boolean
   }
   isAdmin?: boolean
 }
@@ -82,7 +83,7 @@ export function Header({ currentWeek, user, isAdmin = false }: HeaderProps) {
           </TooltipProvider>
 
           {/* 사용자 메뉴 */}
-          <UserMenu nickname={user.nickname} />
+          <UserMenu nickname={user.nickname} hasPassword={user.hasPassword} />
         </div>
       </div>
     </header>
