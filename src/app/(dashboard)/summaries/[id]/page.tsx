@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SummaryContent } from '@/components/summary/summary-content'
+import { SummaryActions } from '@/components/summary/summary-actions'
 
 interface Params {
   id: string
@@ -60,9 +61,12 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
             뒤로가기
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">
-          {weeks?.title || `${weeks?.week_number}주차`}
-        </h1>
+        <div className="flex items-start justify-between">
+          <h1 className="text-3xl font-bold">
+            {weeks?.title || `${weeks?.week_number}주차`}
+          </h1>
+          <SummaryActions summaryId={params.id} isAuthor={summary.author_id === user.id} />
+        </div>
       </div>
 
       <Card>
