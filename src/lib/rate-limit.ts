@@ -1,22 +1,5 @@
-/**
- * 간단한 in-memory rate limiter (서버 사이드 전용)
- * 단일 인스턴스 배포 기준. 스케일링 시 Redis 등으로 교체 필요.
- */
-
-const store = new Map<string, { count: number; resetAt: number }>()
-
-// 오래된 엔트리 주기적 정리 (메모리 누수 방지)
-const CLEANUP_INTERVAL = 60_000
-let lastCleanup = Date.now()
-
-function cleanup() {
-  const now = Date.now()
-  if (now - lastCleanup < CLEANUP_INTERVAL) return
-  lastCleanup = now
-  for (const [key, entry] of store) {
-    if (entry.resetAt < now) store.delete(key)
-  }
-}
+import { Redis } from '@upstash/redis'
+import { Ratelimit } from '@upstash/ratelimit'
 
 interface RateLimitOptions {
   /** 윈도우 내 최대 요청 수 */
@@ -25,28 +8,34 @@ interface RateLimitOptions {
   windowMs: number
 }
 
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
+
+const limiters = new Map<string, Ratelimit>()
+
+function getLimiter(limit: number, windowMs: number): Ratelimit {
+  const key = `${limit}:${windowMs}`
+  let limiter = limiters.get(key)
+  if (!limiter) {
+    limiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(limit, `${windowMs} ms`),
+    })
+    limiters.set(key, limiter)
+  }
+  return limiter
+}
+
 /**
  * Rate limit 체크. 초과 시 { limited: true } 반환.
  * key는 IP나 userId 등 식별자.
  */
-export function rateLimit(
+export async function rateLimit(
   key: string,
   { limit, windowMs }: RateLimitOptions
-): { limited: boolean } {
-  cleanup()
-
-  const now = Date.now()
-  const entry = store.get(key)
-
-  if (!entry || entry.resetAt < now) {
-    store.set(key, { count: 1, resetAt: now + windowMs })
-    return { limited: false }
-  }
-
-  entry.count++
-  if (entry.count > limit) {
-    return { limited: true }
-  }
-
-  return { limited: false }
+): Promise<{ limited: boolean }> {
+  const { success } = await getLimiter(limit, windowMs).limit(key)
+  return { limited: !success }
 }

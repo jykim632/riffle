@@ -11,7 +11,7 @@ const RATE_LIMIT_ERROR = '요청이 너무 많습니다. 잠시 후 다시 시�
 // 비밀번호 초기화 이메일 요청
 export async function requestPasswordReset(formData: FormData) {
   const ip = await getClientIp()
-  if (rateLimit(`reset:${ip}`, { limit: 3, windowMs: 60_000 }).limited) {
+  if ((await rateLimit(`reset:${ip}`, { limit: 3, windowMs: 60_000 })).limited) {
     return { error: RATE_LIMIT_ERROR }
   }
 
@@ -36,7 +36,7 @@ export async function requestPasswordReset(formData: FormData) {
 // 새 비밀번호 설정
 export async function updatePassword(formData: FormData) {
   const ip = await getClientIp()
-  if (rateLimit(`update-pw:${ip}`, { limit: 5, windowMs: 60_000 }).limited) {
+  if ((await rateLimit(`update-pw:${ip}`, { limit: 5, windowMs: 60_000 })).limited) {
     return { error: RATE_LIMIT_ERROR }
   }
 
@@ -65,7 +65,7 @@ export async function updatePassword(formData: FormData) {
 // 비밀번호 변경 (로그인 상태)
 export async function changePassword(formData: FormData) {
   const ip = await getClientIp()
-  if (rateLimit(`change-pw:${ip}`, { limit: 5, windowMs: 60_000 }).limited) {
+  if ((await rateLimit(`change-pw:${ip}`, { limit: 5, windowMs: 60_000 })).limited) {
     return { error: RATE_LIMIT_ERROR }
   }
 

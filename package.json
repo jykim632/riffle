@@ -23,6 +23,8 @@
     "@supabase/supabase-js": "^2.93.3",
     "@tailwindcss/typography": "^0.5.19",
     "@uiw/react-md-editor": "^4.0.11",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.2",
     "@vercel/analytics": "^1.6.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
