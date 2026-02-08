@@ -3,17 +3,7 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import {
   Select,
   SelectContent,
@@ -111,7 +101,7 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -169,8 +159,8 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
                 <TableCell>
                   <div className="flex gap-1">
                     {member.hasPassword && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                      <ConfirmDialog
+                        trigger={
                           <Button
                             variant="ghost"
                             size="icon"
@@ -178,28 +168,17 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
                           >
                             <KeyRound className="h-4 w-4" />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>비밀번호 초기화</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              정말 {member.nickname}님의 비밀번호를 초기화하시겠습니까?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>취소</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handlePasswordReset(member.id)}
-                            >
-                              초기화
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        }
+                        title="비밀번호 초기화"
+                        description={`정말 ${member.nickname}님의 비밀번호를 초기화하시겠습니까?`}
+                        onConfirm={() => handlePasswordReset(member.id)}
+                        loading={resetting === member.id}
+                        confirmText="초기화"
+                      />
                     )}
                     {!isCurrentUser && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                      <ConfirmDialog
+                        trigger={
                           <Button
                             variant="ghost"
                             size="icon"
@@ -207,27 +186,14 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>계정 삭제</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              정말 {member.nickname}님의 계정을 삭제하시겠습니까?
-                              이 작업은 되돌릴 수 없습니다. 작성한 요약본은 익명화되어
-                              보존됩니다.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>취소</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteAccount(member.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              {deleting === member.id ? '삭제 중...' : '삭제'}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        }
+                        title="계정 삭제"
+                        description={`정말 ${member.nickname}님의 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다. 작성한 요약본은 익명화되어 보존됩니다.`}
+                        onConfirm={() => handleDeleteAccount(member.id)}
+                        loading={deleting === member.id}
+                        confirmText="삭제"
+                        variant="destructive"
+                      />
                     )}
                   </div>
                 </TableCell>

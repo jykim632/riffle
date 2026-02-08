@@ -4,17 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { deleteSummary } from '@/actions/summaries'
 
 interface SummaryActionsProps {
@@ -52,34 +42,21 @@ export function SummaryActions({ summaryId, isAuthor }: SummaryActionsProps) {
         </Link>
       </Button>
 
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogTrigger asChild>
+      <ConfirmDialog
+        trigger={
           <Button variant="destructive" size="icon" disabled={loading}>
             <Trash2 className="h-4 w-4" />
           </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>요약본 삭제</AlertDialogTitle>
-            <AlertDialogDescription>
-              정말로 이 요약본을 삭제하시겠습니까? 삭제된 요약본은 복구할 수 없습니다.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>취소</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault()
-                handleDelete()
-              }}
-              disabled={loading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {loading ? '삭제 중...' : '삭제'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        }
+        open={open}
+        onOpenChange={setOpen}
+        title="요약본 삭제"
+        description="정말로 이 요약본을 삭제하시겠습니까? 삭제된 요약본은 복구할 수 없습니다."
+        onConfirm={handleDelete}
+        loading={loading}
+        confirmText="삭제"
+        variant="destructive"
+      />
     </div>
   )
 }
