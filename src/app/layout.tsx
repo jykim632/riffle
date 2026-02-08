@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: "매주 경제 라디오 요약본을 작성하고 공유하는 스터디 플랫폼",
   icons: {
     icon: [
-      { url: "/icon.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png" },
       { url: "/favicon.ico", sizes: "32x32" },
     ],
     apple: "/apple-icon.png",
