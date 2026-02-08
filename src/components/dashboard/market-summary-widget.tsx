@@ -43,7 +43,7 @@ export function MarketSummaryWidget({ indicators, previousIndicators }: MarketSu
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-3 overflow-x-auto sm:gap-5">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-5">
           {ordered.map((ind, i) => {
             const def = INDICATOR_MAP[ind.indicator_code]
             if (!def) return null
@@ -54,20 +54,18 @@ export function MarketSummaryWidget({ indicators, previousIndicators }: MarketSu
               : null
 
             return (
-              <div key={ind.indicator_code} className="flex shrink-0 items-center gap-1.5">
+              <div key={ind.indicator_code} className="flex items-center gap-1.5">
                 <span className="text-xs text-muted-foreground">{def.label}</span>
                 <span className="text-sm font-bold tabular-nums">
                   {formatWidgetValue(ind.data_value, def.unit)}
                 </span>
-                {change !== null ? (
+                {change !== null && (
                   <span className={`text-xs font-medium tabular-nums ${getChangeColor(change)}`}>
                     {getChangeArrow(change)}{formatChange(change)}
                   </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">─</span>
                 )}
                 {i < ordered.length - 1 && (
-                  <span className="ml-1 text-border sm:ml-2">|</span>
+                  <span className="ml-1 hidden text-border sm:inline sm:ml-2">|</span>
                 )}
               </div>
             )
