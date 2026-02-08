@@ -118,12 +118,18 @@ export default async function DashboardPage() {
         {/* 비멤버 경고 배너 */}
         {!admin && !member && <NonMemberAlert />}
 
-        {/* 시즌 종합 배너 */}
-        <SeasonBanner
-          season={currentSeason}
-          currentWeekNumber={currentWeek.week_number}
-          totalWeeks={totalWeeks ?? 0}
-          members={memberNicknames}
+        {/* 이번 주차 + 제출 CTA */}
+        <WeekOverview
+          week={currentWeek}
+          mySubmission={mySubmission}
+          allSubmissions={submissionsStatus}
+          isCurrentSeasonMember={admin || member}
+        />
+
+        {/* 이번 주 요약본 */}
+        <CurrentWeekSummaries
+          summaries={currentWeekSummaries ?? []}
+          weekId={currentWeek.id}
         />
 
         {/* 시장 요약 */}
@@ -132,21 +138,13 @@ export default async function DashboardPage() {
           previousIndicators={widgetPreviousIndicators}
         />
 
-        {/* 기존 2칸 그리드 */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
-          <WeekOverview
-            week={currentWeek}
-            mySubmission={mySubmission}
-            allSubmissions={submissionsStatus}
-            isCurrentSeasonMember={admin || member}
-          />
-
-          <CurrentWeekSummaries
-            summaries={currentWeekSummaries ?? []}
-            weekId={currentWeek.id}
-          />
-        </div>
-
+        {/* 시즌 종합 배너 */}
+        <SeasonBanner
+          season={currentSeason}
+          currentWeekNumber={currentWeek.week_number}
+          totalWeeks={totalWeeks ?? 0}
+          members={memberNicknames}
+        />
       </div>
     </div>
   )
