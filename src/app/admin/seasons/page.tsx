@@ -30,9 +30,9 @@ export default async function SeasonsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">시즌 관리</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">시즌 관리</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             시즌 생성 및 멤버 관리
           </p>

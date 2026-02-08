@@ -50,8 +50,8 @@ export default async function MembersPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">멤버 관리</h1>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl font-bold sm:text-3xl">멤버 관리</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           멤버 목록 및 역할 변경
         </p>

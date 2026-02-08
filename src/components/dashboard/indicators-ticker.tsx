@@ -29,42 +29,55 @@ export function IndicatorsTicker({ indicators, previousIndicators }: IndicatorsT
 
   const baseDate = ordered[0]?.time_label ? formatDate(ordered[0].time_label) : ''
 
+  const tickerItems = (
+    <>
+      {baseDate && (
+        <span className="shrink-0 text-muted-foreground">{baseDate} 기준</span>
+      )}
+      {ordered.map((ind, i) => {
+        const def = INDICATOR_MAP[ind.indicator_code]
+        if (!def) return null
+
+        const prev = prevMap.get(ind.indicator_code)
+        const change = prev && prev !== 0
+          ? ((ind.data_value - prev) / Math.abs(prev)) * 100
+          : null
+
+        return (
+          <div key={ind.indicator_code} className="flex shrink-0 items-center gap-1">
+            <span className="text-muted-foreground">{def.label}</span>
+            <span className="font-medium tabular-nums">
+              {formatTickerValue(ind.data_value, def.unit)}
+            </span>
+            {change !== null && (
+              <span className={`tabular-nums font-medium ${getChangeColor(change)}`}>
+                {getChangeArrow(change)}{formatChange(change)}
+              </span>
+            )}
+            {i < ordered.length - 1 && (
+              <span className="ml-2.5 text-border sm:ml-4">|</span>
+            )}
+          </div>
+        )
+      })}
+    </>
+  )
+
   return (
     <Link
       href="/indicators"
-      className="block border-b bg-muted/50 hover:bg-muted/80 transition-colors"
+      className="block border-b bg-muted/50 transition-colors hover:bg-muted/80"
     >
-      <div className="mx-auto max-w-7xl overflow-x-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4 py-1.5 text-xs sm:gap-6">
-          {baseDate && (
-            <span className="shrink-0 text-muted-foreground">{baseDate} 기준</span>
-          )}
-          {ordered.map((ind, i) => {
-            const def = INDICATOR_MAP[ind.indicator_code]
-            if (!def) return null
-
-            const prev = prevMap.get(ind.indicator_code)
-            const change = prev && prev !== 0
-              ? ((ind.data_value - prev) / Math.abs(prev)) * 100
-              : null
-
-            return (
-              <div key={ind.indicator_code} className="flex shrink-0 items-center gap-1.5">
-                <span className="text-muted-foreground">{def.label}</span>
-                <span className="font-medium tabular-nums">
-                  {formatTickerValue(ind.data_value, def.unit)}
-                </span>
-                {change !== null && (
-                  <span className={`tabular-nums font-medium ${getChangeColor(change)}`}>
-                    {getChangeArrow(change)}{formatChange(change)}
-                  </span>
-                )}
-                {i < ordered.length - 1 && (
-                  <span className="ml-2.5 text-border sm:ml-4">|</span>
-                )}
-              </div>
-            )
-          })}
+      <div className="overflow-hidden">
+        <div className="ticker-track flex w-max items-center gap-4 py-2 text-xs sm:gap-6">
+          {/* 원본 */}
+          <div className="flex shrink-0 items-center gap-4 px-4 sm:gap-6 sm:px-6 lg:px-8">
+            {tickerItems}
+          </div>
+          {/* 복제 (심리스 루프용) */}
+          <div className="flex shrink-0 items-center gap-4 px-4 sm:gap-6 sm:px-6 lg:px-8" aria-hidden>
+            {tickerItems}
+          </div>
         </div>
       </div>
     </Link>
@@ -72,10 +85,14 @@ export function IndicatorsTicker({ indicators, previousIndicators }: IndicatorsT
 }
 
 function formatTickerValue(value: number, unit: string): string {
-  if (unit === '원' || unit === 'pt') {
-    return value.toLocaleString('ko-KR', { maximumFractionDigits: 2 })
+  if (unit === '원') {
+    return value.toLocaleString('ko-KR', { maximumFractionDigits: 0 }) + '원'
+  }
+  if (unit === 'pt') {
+    return value.toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + 'pt'
   }
   if (unit === '%') return value.toFixed(2) + '%'
+  if (unit === '2020=100') return value.toFixed(1)
   return value.toLocaleString('ko-KR', { maximumFractionDigits: 2 })
 }
 
