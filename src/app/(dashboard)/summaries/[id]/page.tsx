@@ -38,13 +38,15 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
   const weeks = Array.isArray(summary.weeks) ? summary.weeks[0] : summary.weeks
   const profiles = Array.isArray(summary.profiles) ? summary.profiles[0] : summary.profiles
 
-  // 3. 같은 작성자의 같은 주차 모든 버전 조회
-  const { data: allVersions } = await supabase
-    .from('summaries')
-    .select('id, created_at')
-    .eq('author_id', summary.author_id)
-    .eq('week_id', summary.week_id)
-    .order('created_at', { ascending: true })
+  // 3. 같은 작성자의 같은 주차 모든 버전 조회 (탈퇴한 멤버는 버전 조회 불가)
+  const { data: allVersions } = summary.author_id
+    ? await supabase
+        .from('summaries')
+        .select('id, created_at')
+        .eq('author_id', summary.author_id)
+        .eq('week_id', summary.week_id)
+        .order('created_at', { ascending: true })
+    : { data: null }
 
   const hasMultipleVersions = allVersions && allVersions.length > 1
 
@@ -66,7 +68,7 @@ export default async function SummaryDetailPage(props: { params: Promise<Params>
       <Card>
         <CardHeader>
           <CardDescription>
-            작성자: {profiles?.nickname || '알 수 없음'} • 작성일:{' '}
+            작성자: {summary.author_id === null ? '탈퇴한 멤버' : (profiles?.nickname || '알 수 없음')} • 작성일:{' '}
             {new Date(summary.created_at).toLocaleDateString('ko-KR')}
           </CardDescription>
 

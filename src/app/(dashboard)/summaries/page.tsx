@@ -57,9 +57,9 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
     content: string
     created_at: string
     week_id: string
-    author_id: string
+    author_id: string | null
     weeks: { week_number: number; title: string } | { week_number: number; title: string }[]
-    profiles: { nickname: string } | { nickname: string }[]
+    profiles: { nickname: string } | { nickname: string }[] | null
   }
 
   const summaries = (summariesRaw as unknown as SummaryWithRelations[] | null)?.map((summary) => ({
@@ -119,7 +119,7 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
                     {summary.weeks?.title || `${summary.weeks?.week_number}주차`}
                   </CardTitle>
                   <CardDescription>
-                    {summary.profiles?.nickname || '알 수 없음'} •{' '}
+                    {summary.author_id === null ? '탈퇴한 멤버' : (summary.profiles?.nickname || '알 수 없음')} •{' '}
                     {new Date(summary.created_at).toLocaleDateString('ko-KR')}
                   </CardDescription>
                 </CardHeader>

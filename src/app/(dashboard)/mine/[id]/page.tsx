@@ -35,8 +35,8 @@ export default async function MySummaryDetailPage(props: { params: Promise<Param
     notFound()
   }
 
-  // 3. 권한 검증: 본인 것이 아니면 읽기 전용 경로로 리다이렉트
-  if (summary.author_id !== user.id) {
+  // 3. 권한 검증: 본인 것이 아니거나 탈퇴한 멤버 요약본이면 읽기 전용으로 리다이렉트
+  if (!summary.author_id || summary.author_id !== user.id) {
     redirect(`/summaries/${params.id}`)
   }
 

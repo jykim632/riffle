@@ -32,10 +32,11 @@ import {
 import {
   updateMemberRoleAction,
   resetMemberPasswordAction,
+  deleteUserAccountAction,
 } from '@/lib/actions/admin/members'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { KeyRound } from 'lucide-react'
+import { KeyRound, Trash2 } from 'lucide-react'
 
 interface MemberWithSeasons {
   id: string
@@ -54,6 +55,23 @@ interface MembersListProps {
 export function MembersList({ members, currentUserId }: MembersListProps) {
   const [loading, setLoading] = useState<string | null>(null)
   const [resetting, setResetting] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  const handleDeleteAccount = async (userId: string) => {
+    setDeleting(userId)
+    try {
+      const result = await deleteUserAccountAction(userId)
+      if (result.success) {
+        alert('계정이 삭제되었습니다.')
+      } else {
+        alert(`계정 삭제 실패: ${result.error}`)
+      }
+    } catch {
+      alert('계정 삭제 중 오류 발생')
+    } finally {
+      setDeleting(null)
+    }
+  }
 
   const handlePasswordReset = async (userId: string) => {
     setResetting(userId)
@@ -152,35 +170,69 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
                   </Select>
                 </TableCell>
                 <TableCell>
-                  {member.hasPassword && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={resetting === member.id}
-                        >
-                          <KeyRound className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>비밀번호 초기화</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            정말 {member.nickname}님의 비밀번호를 초기화하시겠습니까?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>취소</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handlePasswordReset(member.id)}
+                  <div className="flex gap-1">
+                    {member.hasPassword && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={resetting === member.id}
                           >
-                            초기화
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
+                            <KeyRound className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>비밀번호 초기화</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              정말 {member.nickname}님의 비밀번호를 초기화하시겠습니까?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>취소</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handlePasswordReset(member.id)}
+                            >
+                              초기화
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                    {!isCurrentUser && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={deleting === member.id}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>계정 삭제</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              정말 {member.nickname}님의 계정을 삭제하시겠습니까?
+                              이 작업은 되돌릴 수 없습니다. 작성한 요약본은 익명화되어
+                              보존됩니다.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>취소</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteAccount(member.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {deleting === member.id ? '삭제 중...' : '삭제'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             )

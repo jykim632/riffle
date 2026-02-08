@@ -115,7 +115,7 @@ export default async function DashboardPage() {
   // 8. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
   const { data: currentWeekSummariesRaw } = await supabase
     .from('first_summaries')
-    .select('id, content, created_at, profiles(nickname)')
+    .select('id, author_id, content, created_at, profiles(nickname)')
     .eq('week_id', currentWeek.id)
     .order('created_at', { ascending: false })
     .limit(10)
@@ -123,13 +123,15 @@ export default async function DashboardPage() {
   // Supabase 뷰 JOIN 결과 타입 (first_summaries + profiles)
   type SummaryWithProfile = {
     id: string
+    author_id: string | null
     content: string
     created_at: string
-    profiles: { nickname: string } | { nickname: string }[]
+    profiles: { nickname: string } | { nickname: string }[] | null
   }
 
   const currentWeekSummaries = (currentWeekSummariesRaw as unknown as SummaryWithProfile[] | null)?.map((summary) => ({
     id: summary.id,
+    author_id: summary.author_id,
     content: summary.content,
     created_at: summary.created_at,
     profiles: Array.isArray(summary.profiles) ? summary.profiles[0] : summary.profiles,

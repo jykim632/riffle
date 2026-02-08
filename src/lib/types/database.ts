@@ -88,7 +88,7 @@ export interface Database {
         Row: {
           id: string
           season_id: string
-          user_id: string
+          user_id: string | null
           joined_at: string
         }
         Insert: {
@@ -140,7 +140,7 @@ export interface Database {
         Row: {
           id: string
           week_id: string
-          author_id: string
+          author_id: string | null
           content: string
           created_at: string
           updated_at: string
@@ -168,7 +168,7 @@ export interface Database {
         Row: {
           id: string
           week_id: string
-          author_id: string
+          author_id: string | null
           content: string
           created_at: string
           updated_at: string
@@ -178,7 +178,7 @@ export interface Database {
         Row: {
           id: string
           week_id: string
-          author_id: string
+          author_id: string | null
           content: string
           created_at: string
           updated_at: string
