@@ -1,114 +1,91 @@
-# 계정 삭제 - 익명화 후 보존 설계
+# 계정 삭제 - 설계 문서
 
-> 상태: 설계 완료, 구현 대기
+> 상태: **확정 / 구현 완료**
+> 최종 업데이트: 2026-02-08
 
-## 배경
+## 핵심 구분: "시즌 탈퇴" vs "계정 삭제"
 
-현재 `profiles.id`가 `auth.users(id) ON DELETE CASCADE`를 참조하고, 하위 테이블들도 `profiles(id) ON DELETE CASCADE`로 연결되어 있어 계정 삭제 시 요약본까지 전부 삭제됨.
+| | 시즌 탈퇴 | 계정 삭제 |
+|---|---|---|
+| **트리거** | 관리자가 시즌에서 멤버 제거 | 관리자가 계정 삭제 실행 |
+| **의미** | "이번 시즌 안 해" | "서비스 나갈게" |
+| **season_members** | 행 삭제 (DELETE) | 익명화 (SET NULL) |
+| **summaries** | 보존 (영향 없음) | 보존 + author_id NULL |
+| **profiles** | 유지 | 삭제 |
+| **계정 상태** | 활성 (다른 시즌 참여 가능) | 완전 삭제 |
 
-요약본은 스터디 공유 자산이므로 내용은 보존하되, 작성자 정보만 익명화하는 정책으로 변경.
+---
 
-## 삭제 시 동작 요약
+## 테이블별 삭제 처리
 
-| 리소스 | 처리 | 메커니즘 |
-|--------|------|----------|
-| `auth.users` | 삭제 | Supabase Admin API |
-| `profiles` | 삭제 | CASCADE (auth.users → profiles) |
-| `summaries` | 보존 (`author_id` = NULL) | SET NULL |
-| `season_members` | 삭제 | CASCADE (profiles → season_members) |
-| `invite_codes` | 익명화 (FK = NULL) | SET NULL |
+| 리소스 | 이전 | 현재 | 이유 |
+|---|---|---|---|
+| `auth.users` | -- | **삭제** (Admin API) | 인증 데이터 완전 제거 |
+| `profiles` | CASCADE | **CASCADE 유지** | auth.users 삭제 시 자동 |
+| `summaries.author_id` | CASCADE (내용까지 삭제) | **SET NULL** | 내용 보존, 작성자만 익명화 |
+| `season_members.user_id` | CASCADE (행 삭제) | **SET NULL** | 참여 기록 보존 (통계용) |
+| `invite_codes` | NO ACTION | **SET NULL** | 이미 nullable, 일관성 |
 
-## DB 마이그레이션 (013_account_deletion_fk.sql)
+### season_members: SET NULL (Option B) 선택 이유
 
-### 1. summaries.author_id: NOT NULL → nullable, CASCADE → SET NULL
+1. `COUNT(*)` → 시즌별 총 참여 인원 정확히 보존
+2. PostgreSQL에서 UNIQUE(season_id, user_id)는 NULL 중복 허용 → 여러 탈퇴자 공존 가능
+3. 통계에서 필요한 건 "몇 명이 참여했냐"지, "탈퇴한 누가 참여했냐"가 아님
+4. display_name 스냅샷은 YAGNI
 
-```sql
--- 기존: author_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE
--- 변경: author_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL
+---
 
-ALTER TABLE public.summaries
-  ALTER COLUMN author_id DROP NOT NULL;
+## 마이그레이션: `013_account_deletion_fk.sql`
 
-ALTER TABLE public.summaries
-  DROP CONSTRAINT summaries_author_id_fkey,
-  ADD CONSTRAINT summaries_author_id_fkey
-    FOREIGN KEY (author_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
-```
+### summaries.author_id
+- NOT NULL 제거 + FK를 `ON DELETE SET NULL`로 변경
 
-### 2. invite_codes.created_by / used_by: CASCADE → SET NULL
+### season_members.user_id
+- NOT NULL 제거 + FK를 `ON DELETE SET NULL`로 변경
 
-```sql
--- created_by: 이미 nullable. FK action만 변경
-ALTER TABLE public.invite_codes
-  DROP CONSTRAINT invite_codes_created_by_fkey,
-  ADD CONSTRAINT invite_codes_created_by_fkey
-    FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+### invite_codes
+- `created_by`, `used_by` FK를 `ON DELETE SET NULL`로 변경
+- `chk_invite_used_consistency` 수정: `used_by`가 NULL이어도 `is_used=true` 허용
 
--- used_by: 이미 nullable. FK action만 변경
-ALTER TABLE public.invite_codes
-  DROP CONSTRAINT invite_codes_used_by_fkey,
-  ADD CONSTRAINT invite_codes_used_by_fkey
-    FOREIGN KEY (used_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
-```
+### latest_summaries / first_summaries 뷰
+- `DISTINCT ON (week_id, COALESCE(author_id, id))` 로 변경
+- 탈퇴 멤버 요약본이 같은 주차에 여러 개 있어도 개별 표시
 
-### 3. chk_invite_used_consistency 제약조건 수정
+---
 
-현재 제약조건:
-```sql
-CONSTRAINT chk_invite_used_consistency CHECK (
-  (is_used = true AND used_by IS NOT NULL AND used_at IS NOT NULL)
-  OR
-  (is_used = false AND used_by IS NULL AND used_at IS NULL)
-)
-```
+## 구현 요약
 
-**문제:** `is_used = true`일 때 `used_by IS NOT NULL`을 강제하므로 SET NULL이 차단됨.
+### 서버 액션
+- `deleteUserAccountAction()` in `src/lib/actions/admin/members.ts`
+- Supabase Admin API `deleteUser()` 호출
+- `requireAdmin()` 가드 + 본인 삭제 방지
 
-수정:
-```sql
-ALTER TABLE public.invite_codes
-  DROP CONSTRAINT chk_invite_used_consistency,
-  ADD CONSTRAINT chk_invite_used_consistency CHECK (
-    (is_used = true AND used_at IS NOT NULL)
-    OR
-    (is_used = false AND used_by IS NULL AND used_at IS NULL)
-  );
-```
+### 프론트엔드
+- `author_id: string | null` 타입 변경 (`database.ts`, 뷰 포함)
+- `author_id === null` → "탈퇴한 멤버" 텍스트 표시
+- `/mine/[id]`: author_id가 null이면 `/summaries/[id]`로 리다이렉트
+- 관리자 멤버 목록에 계정 삭제 버튼 + 확인 다이얼로그 추가
 
-`is_used = true`일 때 `used_by`는 NULL 허용 (탈퇴한 사용자). `used_at`은 여전히 NOT NULL 유지하여 사용 시점은 기록 보존.
+### 영향 없는 부분
+- RLS 정책: 변경 불필요. `NULL != any UUID`
+- `acquire_invite_code` 함수: `is_used = false`만 대상
+- 시즌 탈퇴 로직: 그대로 DELETE FROM season_members
 
-## 주의사항
+---
 
-### 1. latest_summaries / first_summaries 뷰
+## 통계 데이터와 익명화
 
-```sql
-SELECT DISTINCT ON (week_id, author_id) ...
-FROM public.summaries
-ORDER BY week_id, author_id, created_at DESC;
-```
+- Raw 데이터 (summaries, season_members): 삭제 시점에 즉시 SET NULL
+- 향후 집계 통계: 태생적으로 익명 (집계 테이블에 user_id 넣지 않으면 됨)
+- pre-aggregation은 현재 규모(시즌당 ~50명)에서 불필요
 
-`author_id = NULL`인 요약본들은 `DISTINCT ON`에서 하나로 합쳐질 수 있음. 즉, 같은 주차에 탈퇴한 멤버가 2명 이상이면 뷰에서 하나만 보임.
+---
 
-**영향도:** 소규모 스터디라 동시 탈퇴 가능성 낮음. 필요시 뷰에 `id` 컬럼 추가하여 구분 가능.
+## 검증 체크리스트
 
-### 2. RLS 정책
-
-변경 불필요. `author_id = NULL`인 요약본은:
-- 읽기: 기존 정책으로 모든 멤버가 조회 가능
-- 수정/삭제: `auth.uid() = author_id` 조건에 의해 불가 (NULL ≠ any UUID)
-
-### 3. UI 표시
-
-`author_id = NULL`인 요약본의 작성자를 "탈퇴한 멤버"로 표시하는 프론트엔드 처리 필요.
-해당 요약본에는 수정/삭제 버튼을 숨겨야 함 (RLS에서도 차단되지만 UX 일관성 확보).
-
-### 4. acquire_invite_code 함수
-
-수정 불필요. 이 함수는 `is_used = false`인 코드만 찾아서 업데이트하므로, 탈퇴로 인해 `used_by`가 NULL이 된 코드(이미 `is_used = true`)에는 영향 없음.
-
-## 구현 순서
-
-1. DB 마이그레이션 SQL 작성 및 적용
-2. 프론트엔드: `author_id = NULL`일 때 "탈퇴한 멤버" 표시 처리
-3. 관리자 계정 삭제 기능 구현 (Admin API 호출)
-4. 테스트: 계정 삭제 후 요약본 보존 확인
+- [ ] 테스트 계정 생성 + 요약본 작성 + 시즌 멤버 등록
+- [ ] 관리자 페이지에서 계정 삭제 실행
+- [ ] 요약본 내용 보존, author_id=NULL 확인
+- [ ] season_members 행 보존, user_id=NULL 확인
+- [ ] 뷰에서 탈퇴 멤버 요약본 개별 표시 확인
+- [ ] UI에서 "탈퇴한 멤버" 텍스트 표시 확인

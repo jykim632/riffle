@@ -59,9 +59,9 @@ export default async function MySummariesPage(props: { searchParams: Promise<Sea
     content: string
     created_at: string
     week_id: string
-    author_id: string
+    author_id: string | null
     weeks: { week_number: number; title: string } | { week_number: number; title: string }[]
-    profiles: { nickname: string } | { nickname: string }[]
+    profiles: { nickname: string } | { nickname: string }[] | null
   }
 
   const summaries = (summariesRaw as unknown as SummaryWithRelations[] | null)?.map((summary) => ({

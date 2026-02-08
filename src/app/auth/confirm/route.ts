@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   if (!tokenHash || !type) {
     return NextResponse.redirect(
-      `${requestUrl.origin}/reset-password?error=${encodeURIComponent('잘못된 링크입니다.')}`
+      `${requestUrl.origin}/login?error=${encodeURIComponent('잘못된 링크입니다.')}`
     )
   }
 
@@ -26,9 +26,10 @@ export async function GET(request: NextRequest) {
   })
 
   if (error) {
-    return NextResponse.redirect(
-      `${requestUrl.origin}/reset-password?error=${encodeURIComponent('링크가 만료되었습니다. 다시 요청해주세요.')}`
-    )
+    const errorRedirect = type === 'recovery'
+      ? `/reset-password?error=${encodeURIComponent('링크가 만료되었습니다. 다시 요청해주세요.')}`
+      : `/login?error=${encodeURIComponent('링크가 만료되었습니다. 다시 요청해주세요.')}`
+    return NextResponse.redirect(`${requestUrl.origin}${errorRedirect}`)
   }
 
   return NextResponse.redirect(`${requestUrl.origin}${safeNext}`)

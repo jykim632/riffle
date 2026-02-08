@@ -13,6 +13,7 @@ import { formatDate } from '@/lib/utils/date'
 interface CurrentWeekSummariesProps {
   summaries: Array<{
     id: string
+    author_id: string | null
     content: string
     created_at: string
     profiles: {
@@ -69,7 +70,7 @@ export function CurrentWeekSummaries({ summaries, weekId }: CurrentWeekSummaries
             >
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium">
-                  {summary.profiles?.nickname || '알 수 없음'}
+                  {summary.author_id === null ? '탈퇴한 멤버' : (summary.profiles?.nickname || '알 수 없음')}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {formatDate(summary.created_at)}

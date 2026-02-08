@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { User, LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -42,6 +43,12 @@ export function UserMenu({ nickname }: UserMenuProps) {
           <span className="truncate">{nickname}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href="/settings/profile">
+            <User className="mr-2 h-4 w-4" />
+            내 정보
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
           로그아웃

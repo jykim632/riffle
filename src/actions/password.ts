@@ -2,7 +2,7 @@
 
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { resetRequestSchema, updatePasswordSchema } from '@/lib/schemas'
+import { resetRequestSchema, updatePasswordSchema, changePasswordSchema } from '@/lib/schemas'
 import { rateLimit } from '@/lib/rate-limit'
 
 const RATE_LIMIT_ERROR = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
@@ -68,5 +68,54 @@ export async function updatePassword(formData: FormData) {
   }
 
   await supabase.auth.signOut()
+  return { success: true }
+}
+
+// 비밀번호 변경 (로그인 상태)
+export async function changePassword(formData: FormData) {
+  const ip = await getClientIp()
+  if (rateLimit(`change-pw:${ip}`, { limit: 5, windowMs: 60_000 }).limited) {
+    return { error: RATE_LIMIT_ERROR }
+  }
+
+  const rawData = {
+    currentPassword: formData.get('currentPassword') as string,
+    newPassword: formData.get('newPassword') as string,
+    confirmPassword: formData.get('confirmPassword') as string,
+  }
+
+  const result = changePasswordSchema.safeParse(rawData)
+  if (!result.success) {
+    const firstError = result.error.issues[0]
+    return { error: firstError?.message || '입력값이 올바르지 않습니다.' }
+  }
+
+  const supabase = await createClient()
+
+  // 현재 사용자 확인
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) {
+    return { error: '로그인이 필요합니다.' }
+  }
+
+  // 현재 비밀번호 검증
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: result.data.currentPassword,
+  })
+
+  if (signInError) {
+    return { error: '현재 비밀번호가 올바르지 않습니다.' }
+  }
+
+  // 새 비밀번호 설정
+  const { error } = await supabase.auth.updateUser({
+    password: result.data.newPassword,
+  })
+
+  if (error) {
+    return { error: '비밀번호 변경에 실패했습니다. 다시 시도해주세요.' }
+  }
+
   return { success: true }
 }

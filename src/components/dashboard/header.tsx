@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Calendar, BookOpen } from 'lucide-react'
+import { Calendar, BookOpen, Radio } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -63,6 +63,27 @@ export function Header({ currentWeek, user, isAdmin = false }: HeaderProps) {
             <span className="hidden sm:inline">{currentWeek.week_number}주차</span>
             <span className="sm:hidden">{currentWeek.week_number}주</span>
           </Badge>
+
+          {/* 공부방 */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 gap-1 px-2" asChild>
+                  <a
+                    href="https://www.imbc.com/broad/radio/fm/economy/v2/setting/corner/daily/3709975_76330.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Radio className="h-4 w-4" />
+                    <span className="hidden sm:inline">손경제 홈페이지</span>
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>공부방</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           {/* 가이드 */}
           <TooltipProvider>
