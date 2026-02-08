@@ -11,6 +11,12 @@ function toDate(date: string | Date): Date {
   if (/^\d{8}$/.test(date)) return new Date(`${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T00:00:00`)
   // YYYYMM
   if (/^\d{6}$/.test(date)) return new Date(`${date.slice(0, 4)}-${date.slice(4, 6)}-01T00:00:00`)
+  // YYYYQN (분기: 2024Q1 → 2024-01, 2024Q4 → 2024-10)
+  const qMatch = date.match(/^(\d{4})Q([1-4])$/)
+  if (qMatch) {
+    const month = String((Number(qMatch[2]) - 1) * 3 + 1).padStart(2, '0')
+    return new Date(`${qMatch[1]}-${month}-01T00:00:00`)
+  }
   return new Date(date)
 }
 
@@ -18,8 +24,13 @@ function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
 
-/** YYYY-MM-DD */
+/** YYYY-MM-DD (분기 형식은 YYYY년 NQ로 표시) */
 export function formatDate(date: string | Date): string {
+  // 분기 형식은 그대로 표시
+  if (typeof date === 'string') {
+    const qMatch = date.match(/^(\d{4})Q([1-4])$/)
+    if (qMatch) return `${qMatch[1]}년 ${qMatch[2]}Q`
+  }
   const d = toDate(date)
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }

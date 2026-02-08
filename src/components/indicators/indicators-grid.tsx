@@ -1,7 +1,5 @@
-import { CATEGORY_ORDER, INDICATOR_MAP, WIDGET_INDICATOR_CODES, type IndicatorCategory } from '@/lib/ecos'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { FeaturedIndicatorCard } from './featured-indicator-card'
-import { CompactIndicatorRow } from './compact-indicator-row'
+import { INDICATORS, WIDGET_INDICATOR_CODES } from '@/lib/ecos'
+import { IndicatorCard } from './indicator-card'
 
 interface IndicatorData {
   indicator_code: string
@@ -17,9 +15,8 @@ interface IndicatorsGridProps {
 }
 
 /**
- * Featured + Compact 경제지표 레이아웃
- * - 상단: 핵심 4개 지표 (2x2 그리드)
- * - 하단: 나머지 지표 카테고리별 컴팩트 행
+ * 균일 카드 그리드 — 모든 지표를 동일한 카드 포맷으로 표시
+ * 정렬: Featured 4개 먼저 → 나머지는 INDICATORS 배열 순서
  */
 export function IndicatorsGrid({
   indicators,
@@ -30,78 +27,45 @@ export function IndicatorsGrid({
     previousIndicators.map((p) => [p.indicator_code, p.data_value])
   )
 
-  // Featured vs Others 분리
-  const featuredCodes = new Set<string>(WIDGET_INDICATOR_CODES)
-  const featured = WIDGET_INDICATOR_CODES
-    .map((code) => indicators.find((ind) => ind.indicator_code === code))
-    .filter(Boolean) as IndicatorData[]
+  const dataMap = new Map(
+    indicators.map((ind) => [ind.indicator_code, ind])
+  )
 
-  const others = indicators.filter((ind) => !featuredCodes.has(ind.indicator_code))
+  // Featured 코드 먼저, 나머지는 INDICATORS 배열 순서
+  const featuredSet = new Set<string>(WIDGET_INDICATOR_CODES)
+  const sorted: IndicatorData[] = []
 
-  // 나머지 카테고리별 그룹핑
-  const grouped = new Map<IndicatorCategory, IndicatorData[]>()
-  for (const ind of others) {
-    const def = INDICATOR_MAP[ind.indicator_code]
-    if (!def) continue
-    const list = grouped.get(def.category) ?? []
-    list.push(ind)
-    grouped.set(def.category, list)
+  // 1. Featured 순서대로
+  for (const code of WIDGET_INDICATOR_CODES) {
+    const ind = dataMap.get(code)
+    if (ind) sorted.push(ind)
+  }
+
+  // 2. 나머지는 INDICATORS 배열 순서 (카테고리별 자연 정렬)
+  for (const def of INDICATORS) {
+    if (featuredSet.has(def.code)) continue
+    const ind = dataMap.get(def.code)
+    if (ind) sorted.push(ind)
   }
 
   return (
-    <div className="space-y-6">
-      {/* Featured 핵심 지표 */}
-      {featured.length > 0 && (
-        <section>
-          <h3 className="mb-3 text-sm font-semibold text-muted-foreground">핵심 지표</h3>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {featured.map((ind) => (
-              <FeaturedIndicatorCard
-                key={ind.indicator_code}
-                indicatorCode={ind.indicator_code}
-                value={ind.data_value}
-                unitName={ind.unit_name}
-                timeLabel={ind.time_label}
-                previousValue={prevMap.get(ind.indicator_code) ?? null}
-                history={historyMap[ind.indicator_code] ?? []}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 나머지 지표 - 카테고리별 컴팩트 리스트 */}
-      {CATEGORY_ORDER.map((category) => {
-        const items = grouped.get(category)
-        if (!items || items.length === 0) return null
-
-        return (
-          <section key={category}>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold text-muted-foreground">
-                  {category}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-1 pb-2 sm:px-3">
-                <div className="divide-y">
-                  {items.map((ind) => (
-                    <CompactIndicatorRow
-                      key={ind.indicator_code}
-                      indicatorCode={ind.indicator_code}
-                      value={ind.data_value}
-                      unitName={ind.unit_name}
-                      timeLabel={ind.time_label}
-                      previousValue={prevMap.get(ind.indicator_code) ?? null}
-                      history={historyMap[ind.indicator_code] ?? []}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-        )
-      })}
+    <div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {sorted.map((ind) => (
+          <IndicatorCard
+            key={ind.indicator_code}
+            indicatorCode={ind.indicator_code}
+            value={ind.data_value}
+            unitName={ind.unit_name}
+            timeLabel={ind.time_label}
+            previousValue={prevMap.get(ind.indicator_code) ?? null}
+            history={historyMap[ind.indicator_code] ?? []}
+          />
+        ))}
+      </div>
+      <p className="mt-4 text-[11px] text-muted-foreground">
+        출처: 한국은행 경제통계시스템(ECOS)
+      </p>
     </div>
   )
 }
