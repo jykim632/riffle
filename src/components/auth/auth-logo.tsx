@@ -1,12 +1,17 @@
-import { Radio } from 'lucide-react'
+import Image from 'next/image'
 
 export function AuthLogo() {
   return (
     <div className="flex flex-col items-center gap-2 mb-6">
       <div className="flex items-center gap-2">
-        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-          <Radio className="h-6 w-6 text-white" />
-        </div>
+        <Image
+          src="/logo.png"
+          alt="Riffle 로고"
+          width={40}
+          height={40}
+          className="dark:invert"
+          priority
+        />
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
           Riffle
         </h1>
