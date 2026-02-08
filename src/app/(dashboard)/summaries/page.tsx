@@ -1,18 +1,11 @@
 import { requireUser } from '@/lib/auth'
 import { getCurrentSeason, getSeasonWeeks } from '@/lib/queries/season'
+import { normalizeRelation, getAuthorName } from '@/lib/utils/supabase'
 import Link from 'next/link'
 import { Pencil, CircleCheck, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-
-function formatDateRange(startDate: string, endDate: string) {
-  const start = new Date(startDate + 'T00:00:00')
-  const end = new Date(endDate + 'T00:00:00')
-  const fmt = (d: Date) =>
-    `${d.getMonth() + 1}/${d.getDate()}`
-  return `${fmt(start)} ~ ${fmt(end)}`
-}
+import { WeekSelect } from '@/components/summaries/week-select'
 
 interface SearchParams {
   week?: string
@@ -67,15 +60,15 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
     created_at: summary.created_at,
     week_id: summary.week_id,
     author_id: summary.author_id,
-    weeks: Array.isArray(summary.weeks) ? summary.weeks[0] : summary.weeks,
-    profiles: Array.isArray(summary.profiles) ? summary.profiles[0] : summary.profiles,
+    weeks: normalizeRelation(summary.weeks),
+    profiles: normalizeRelation(summary.profiles),
   }))
 
   // 필터 파라미터 유지 헬퍼
-  function buildHref(params: { week?: string; filter?: string }) {
+  function buildFilterHref(toggleMine: boolean) {
     const sp = new URLSearchParams()
-    if (params.filter) sp.set('filter', params.filter)
-    if (params.week) sp.set('week', params.week)
+    if (toggleMine) sp.set('filter', 'mine')
+    if (searchParams.week) sp.set('week', searchParams.week)
     const qs = sp.toString()
     return `/summaries${qs ? `?${qs}` : ''}`
   }
@@ -102,17 +95,14 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
         </div>
 
         {/* 필터 영역 */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex items-center gap-3">
           {/* 내 글만 토글 */}
           <Button
             asChild
             variant={isMineFilter ? 'default' : 'ghost'}
             size="sm"
           >
-            <Link href={isMineFilter
-              ? buildHref({ week: searchParams.week })
-              : buildHref({ week: searchParams.week, filter: 'mine' })
-            }>
+            <Link href={buildFilterHref(!isMineFilter)}>
               {isMineFilter
                 ? <CircleCheck className="mr-1 h-3.5 w-3.5" />
                 : <Circle className="mr-1 h-3.5 w-3.5" />
@@ -121,39 +111,15 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
             </Link>
           </Button>
 
-          <div className="mx-1 h-6 w-px bg-border" />
+          <div className="h-6 w-px bg-border" />
 
           {/* 주차 필터 */}
-          {weeks && weeks.length > 0 && (
-            <TooltipProvider>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  asChild
-                  variant={!searchParams.week ? 'default' : 'outline'}
-                  size="sm"
-                >
-                  <Link href={buildHref({ filter: searchParams.filter })}>전체</Link>
-                </Button>
-                {weeks.map((week) => (
-                  <Tooltip key={week.id}>
-                    <TooltipTrigger asChild>
-                      <Button
-                        asChild
-                        variant={searchParams.week === week.id ? 'default' : 'outline'}
-                        size="sm"
-                      >
-                        <Link href={buildHref({ week: week.id, filter: searchParams.filter })}>
-                          {week.week_number}주차
-                        </Link>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{formatDateRange(week.start_date, week.end_date)}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
-              </div>
-            </TooltipProvider>
+          {weeks.length > 0 && (
+            <WeekSelect
+              weeks={weeks}
+              currentWeekId={searchParams.week}
+              filter={searchParams.filter}
+            />
           )}
         </div>
       </div>
@@ -169,7 +135,7 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
                     {summary.weeks?.title || `${summary.weeks?.week_number}주차`}
                   </CardTitle>
                   <CardDescription>
-                    {summary.author_id === null ? '탈퇴한 멤버' : (summary.profiles?.nickname || '알 수 없음')} •{' '}
+                    {getAuthorName(summary.author_id, summary.profiles?.nickname)} •{' '}
                     {new Date(summary.created_at).toLocaleDateString('ko-KR')}
                   </CardDescription>
                 </CardHeader>
