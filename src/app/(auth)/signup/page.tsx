@@ -47,8 +47,8 @@ export default function SignupPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
-    } else {
-      router.push('/dashboard')
+    } else if ('success' in result && result.success) {
+      router.push(`/signup/check-email?email=${encodeURIComponent(data.email)}`)
     }
   }
 

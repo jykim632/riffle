@@ -36,6 +36,9 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
+    if (error.message.includes('Email not confirmed')) {
+      return { error: '이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.' }
+    }
     return { error: '이메일 또는 비밀번호가 올바르지 않습니다.' }
   }
 
@@ -96,12 +99,16 @@ export async function signup(formData: FormData) {
   }
 
   // 2. 회원가입 (트리거가 profiles 자동 생성)
+  const h = await headers()
+  const origin = h.get('origin') || h.get('x-forwarded-proto') + '://' + h.get('host')
+
   const supabase = await createClient()
   const { data: authData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { nickname }, // raw_user_meta_data에 저장
+      emailRedirectTo: `${origin}/auth/confirm?next=/dashboard`,
     },
   })
 
@@ -126,5 +133,5 @@ export async function signup(formData: FormData) {
     })
   }
 
-  redirect('/dashboard')
+  return { success: true, email }
 }

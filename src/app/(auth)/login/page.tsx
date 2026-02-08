@@ -18,7 +18,8 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const message = searchParams.get('message')
-  const [error, setError] = useState<string | null>(null)
+  const urlError = searchParams.get('error')
+  const [error, setError] = useState<string | null>(urlError)
   const [loading, setLoading] = useState(false)
   const emailInputRef = useRef<HTMLInputElement>(null)
 
