@@ -125,6 +125,20 @@
   }
 }
 
+/* 경제지표 티커 마키 애니메이션 */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.ticker-track {
+  animation: ticker-scroll 40s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
 /* @uiw/react-md-editor - shadcn 테마 통합 */
 .w-md-editor {
   --color-border-default: var(--border) !important;

@@ -33,38 +33,47 @@ const navItems = [
   },
 ]
 
-export function AdminSidebar() {
+export function AdminSidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <aside className="w-64 border-r bg-muted/30">
-      <div className="sticky top-0">
-        <div className="border-b p-6">
-          <h2 className="text-lg font-semibold">관리자 페이지</h2>
-          <p className="text-sm text-muted-foreground">시스템 관리</p>
-        </div>
-        <nav className="space-y-1 p-4">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname.startsWith(item.href)
+    <>
+      <div className="border-b p-6">
+        <h2 className="text-lg font-semibold">관리자 페이지</h2>
+        <p className="text-sm text-muted-foreground">시스템 관리</p>
+      </div>
+      <nav className="space-y-1 p-4">
+        {navItems.map((item) => {
+          const Icon = item.icon
+          const isActive = pathname.startsWith(item.href)
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            )
-          })}
-        </nav>
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                isActive
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          )
+        })}
+      </nav>
+    </>
+  )
+}
+
+export function AdminSidebar() {
+  return (
+    <aside className="hidden w-64 border-r bg-muted/30 lg:block">
+      <div className="sticky top-0">
+        <AdminSidebarContent />
       </div>
     </aside>
   )

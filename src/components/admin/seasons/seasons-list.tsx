@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table'
 import { Users } from 'lucide-react'
 import { toggleSeasonActiveAction } from '@/lib/actions/admin/seasons'
+import { toast } from 'sonner'
 import { Database } from '@/lib/types/database'
 import { formatDate } from '@/lib/utils/date'
 import { ManageMembersDialog } from './manage-members-dialog'
@@ -33,10 +34,10 @@ export function SeasonsList({ seasons }: SeasonsListProps) {
     try {
       const result = await toggleSeasonActiveAction(seasonId, !currentState)
       if (!result.success) {
-        alert(`활성화 변경 실패: ${result.error}`)
+        toast.error(`활성화 변경 실패: ${result.error}`)
       }
     } catch {
-      alert('활성화 변경 중 오류 발생')
+      toast.error('활성화 변경 중 오류 발생')
     } finally {
       setLoading(null)
     }
@@ -51,7 +52,7 @@ export function SeasonsList({ seasons }: SeasonsListProps) {
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>

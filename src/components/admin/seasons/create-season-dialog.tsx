@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/date-picker'
 import { createSeasonAction } from '@/lib/actions/admin/seasons'
+import { toast } from 'sonner'
 
 const seasonSchema = z.object({
   name: z.string().min(1, '시즌명을 입력하세요'),
@@ -76,10 +77,10 @@ export function CreateSeasonDialog({ children }: CreateSeasonDialogProps) {
         setOpen(false)
         reset()
       } else {
-        alert(`시즌 생성 실패: ${result.error}`)
+        toast.error(`시즌 생성 실패: ${result.error}`)
       }
     } catch {
-      alert('시즌 생성 중 오류 발생')
+      toast.error('시즌 생성 중 오류 발생')
     } finally {
       setIsSubmitting(false)
     }

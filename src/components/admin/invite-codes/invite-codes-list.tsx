@@ -12,7 +12,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Copy, Trash2 } from 'lucide-react'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { deleteInviteCodeAction } from '@/lib/actions/admin/invite-codes'
+import { toast } from 'sonner'
 import { formatDateTime } from '@/lib/utils/date'
 
 interface InviteCode {
@@ -40,16 +42,14 @@ export function InviteCodesList({ codes }: InviteCodesListProps) {
   }
 
   const handleDelete = async (codeId: string) => {
-    if (!confirm('이 초대 코드를 삭제하시겠습니까?')) return
-
     setLoading(codeId)
     try {
       const result = await deleteInviteCodeAction(codeId)
       if (!result.success) {
-        alert(`삭제 실패: ${result.error}`)
+        toast.error(`삭제 실패: ${result.error}`)
       }
     } catch {
-      alert('삭제 중 오류 발생')
+      toast.error('삭제 중 오류 발생')
     } finally {
       setLoading(null)
     }
@@ -64,7 +64,7 @@ export function InviteCodesList({ codes }: InviteCodesListProps) {
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -121,15 +121,24 @@ export function InviteCodesList({ codes }: InviteCodesListProps) {
                 </TableCell>
                 <TableCell className="text-right">
                   {!code.is_used && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(code.id)}
-                      disabled={loading === code.id}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <ConfirmDialog
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          disabled={loading === code.id}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      }
+                      title="초대 코드 삭제"
+                      description="이 초대 코드를 삭제하시겠습니까?"
+                      onConfirm={() => handleDelete(code.id)}
+                      loading={loading === code.id}
+                      confirmText="삭제"
+                      variant="destructive"
+                    />
                   )}
                 </TableCell>
               </TableRow>

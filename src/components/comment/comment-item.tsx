@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { Pencil, Trash2, X, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { updateComment, deleteComment } from '@/actions/comments'
+import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils/date'
 
 interface CommentItemProps {
@@ -56,7 +58,7 @@ export function CommentItem({ comment, isAuthor }: CommentItemProps) {
     const result = await deleteComment(formData)
 
     if (result?.error) {
-      alert(result.error)
+      toast.error(result.error)
       setLoading(false)
     }
   }
@@ -128,15 +130,24 @@ export function CommentItem({ comment, isAuthor }: CommentItemProps) {
           >
             <Pencil className="h-3.5 w-3.5" />
           </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-destructive hover:text-destructive"
-            onClick={handleDelete}
-            disabled={loading}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          <ConfirmDialog
+            trigger={
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive hover:text-destructive"
+                disabled={loading}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            }
+            title="댓글 삭제"
+            description="정말로 이 댓글을 삭제하시겠습니까?"
+            onConfirm={handleDelete}
+            loading={loading}
+            confirmText="삭제"
+            variant="destructive"
+          />
         </div>
       )}
     </div>
