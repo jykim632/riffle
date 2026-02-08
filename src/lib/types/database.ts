@@ -162,6 +162,32 @@ export interface Database {
           updated_at?: string
         }
       }
+      comments: {
+        Row: {
+          id: string
+          summary_id: string
+          author_id: string
+          content: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          summary_id: string
+          author_id: string
+          content: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          summary_id?: string
+          author_id?: string
+          content?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
       economic_indicators: {
         Row: {
           id: string

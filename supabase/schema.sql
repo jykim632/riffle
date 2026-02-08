@@ -61,6 +61,20 @@ CREATE TABLE IF NOT EXISTS public.summaries (
   CONSTRAINT chk_summaries_content_not_empty CHECK (length(trim(content)) > 0)
 );
 
+-- comments: 요약본 댓글
+CREATE TABLE IF NOT EXISTS public.comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  summary_id UUID NOT NULL REFERENCES public.summaries(id) ON DELETE CASCADE,
+  author_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  -- 빈 댓글 방지 + 최대 500자
+  CONSTRAINT chk_comments_content_not_empty CHECK (length(trim(content)) > 0),
+  CONSTRAINT chk_comments_content_max_length CHECK (length(content) <= 500)
+);
+
 -- ============================================================================
 -- 2. 인덱스
 -- ============================================================================
@@ -82,6 +96,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_weeks_single_current
 -- 초대 코드 조회 최적화 (미사용 코드만)
 CREATE INDEX IF NOT EXISTS idx_invite_codes_code ON public.invite_codes(code) WHERE is_used = false;
 
+-- 요약본별 댓글 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_comments_summary_id ON public.comments(summary_id);
+
+-- 사용자별 댓글 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_comments_author_id ON public.comments(author_id);
+
+-- 요약본별 최신 댓글 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_comments_summary_created
+  ON public.comments(summary_id, created_at DESC);
+
 -- ============================================================================
 -- 3. RLS (Row Level Security) 정책
 -- ============================================================================
@@ -98,6 +122,9 @@ ALTER TABLE public.weeks FORCE ROW LEVEL SECURITY;
 
 ALTER TABLE public.summaries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.summaries FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments FORCE ROW LEVEL SECURITY;
 
 -- profiles 정책
 CREATE POLICY "프로필 조회"
@@ -138,6 +165,27 @@ CREATE POLICY "요약본 수정"
 
 CREATE POLICY "요약본 삭제"
   ON public.summaries FOR DELETE
+  TO authenticated
+  USING ((SELECT auth.uid()) = author_id);
+
+-- comments 정책
+CREATE POLICY "댓글 조회"
+  ON public.comments FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "댓글 작성"
+  ON public.comments FOR INSERT
+  TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = author_id);
+
+CREATE POLICY "댓글 수정"
+  ON public.comments FOR UPDATE
+  TO authenticated
+  USING ((SELECT auth.uid()) = author_id);
+
+CREATE POLICY "댓글 삭제"
+  ON public.comments FOR DELETE
   TO authenticated
   USING ((SELECT auth.uid()) = author_id);
 

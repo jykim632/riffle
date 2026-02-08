@@ -1,8 +1,9 @@
 import { requireUser } from '@/lib/auth'
 import { getCurrentSeason, getSeasonWeeks } from '@/lib/queries/season'
 import { normalizeRelation, getAuthorName } from '@/lib/utils/supabase'
+import { formatDate } from '@/lib/utils/date'
 import Link from 'next/link'
-import { Pencil, CircleCheck, Circle } from 'lucide-react'
+import { Pencil, CircleCheck, Circle, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { WeekSelect } from '@/components/summaries/week-select'
@@ -63,6 +64,23 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
     weeks: normalizeRelation(summary.weeks),
     profiles: normalizeRelation(summary.profiles),
   }))
+
+  // 댓글 수 조회
+  const summaryIds = summaries?.map((s) => s.id) ?? []
+  const commentCounts: Record<string, number> = {}
+
+  if (summaryIds.length > 0) {
+    const { data: commentData } = await supabase
+      .from('comments')
+      .select('summary_id')
+      .in('summary_id', summaryIds)
+
+    if (commentData) {
+      for (const { summary_id } of commentData) {
+        commentCounts[summary_id] = (commentCounts[summary_id] || 0) + 1
+      }
+    }
+  }
 
   // 필터 파라미터 유지 헬퍼
   function buildFilterHref(toggleMine: boolean) {
@@ -136,7 +154,7 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
                   </CardTitle>
                   <CardDescription>
                     {getAuthorName(summary.author_id, summary.profiles?.nickname)} •{' '}
-                    {new Date(summary.created_at).toLocaleDateString('ko-KR')}
+                    {formatDate(summary.created_at)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -144,6 +162,12 @@ export default async function SummariesPage(props: { searchParams: Promise<Searc
                     {summary.content.slice(0, 100)}
                     {summary.content.length > 100 ? '...' : ''}
                   </p>
+                  {(commentCounts[summary.id] ?? 0) > 0 && (
+                    <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      {commentCounts[summary.id]}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </Link>

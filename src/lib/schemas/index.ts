@@ -10,5 +10,8 @@ export * from './profile'
 // Invite code schemas
 export * from './invite-code'
 
+// Comment schemas
+export * from './comment'
+
 // Indicator schemas
 export * from './indicator'
