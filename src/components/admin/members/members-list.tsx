@@ -26,13 +26,16 @@ import {
 } from '@/lib/actions/admin/members'
 import { formatDate } from '@/lib/utils/date'
 import { toast } from 'sonner'
-import { KeyRound, Trash2 } from 'lucide-react'
+import { KeyRound, Trash2, Mail, Chrome } from 'lucide-react'
 
 interface MemberWithSeasons {
   id: string
   nickname: string
+  email: string
   role: 'admin' | 'member'
   created_at: string
+  providers: string[]
+  lastSignIn: string | null
   seasons: string[]
   hasPassword: boolean
 }
@@ -107,7 +110,10 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
         <TableHeader>
           <TableRow>
             <TableHead>닉네임</TableHead>
+            <TableHead>이메일</TableHead>
+            <TableHead>로그인 방식</TableHead>
             <TableHead>가입일</TableHead>
+            <TableHead>마지막 로그인</TableHead>
             <TableHead>소속 시즌</TableHead>
             <TableHead className="w-32">역할</TableHead>
             <TableHead className="w-24">관리</TableHead>
@@ -126,7 +132,29 @@ export function MembersList({ members, currentUserId }: MembersListProps) {
                     <span className="ml-2 text-xs text-muted-foreground">(나)</span>
                   )}
                 </TableCell>
+                <TableCell className="text-muted-foreground text-sm">
+                  {member.email}
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    {member.providers.includes('email') && (
+                      <Badge variant="outline" className="text-xs gap-1">
+                        <Mail className="h-3 w-3" />
+                        이메일
+                      </Badge>
+                    )}
+                    {member.providers.includes('google') && (
+                      <Badge variant="outline" className="text-xs gap-1">
+                        <Chrome className="h-3 w-3" />
+                        Google
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {member.lastSignIn ? formatDate(member.lastSignIn) : '-'}
+                </TableCell>
                 <TableCell>
                   {member.seasons.length > 0 ? (
                     <div className="flex flex-wrap gap-1">

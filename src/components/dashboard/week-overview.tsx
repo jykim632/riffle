@@ -32,7 +32,7 @@ export function WeekOverview({ week, mySubmission, allSubmissions, isCurrentSeas
   const submittedCount = allSubmissions.filter((s) => s.has_submitted).length
 
   return (
-    <Card className="shadow-sm transition-shadow hover:shadow-md">
+    <Card className="h-full shadow-sm transition-shadow hover:shadow-md">
       <CardContent className="space-y-8">
         {/* 주차 정보 */}
         <div>

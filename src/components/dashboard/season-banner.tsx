@@ -20,7 +20,7 @@ export function SeasonBanner({
   const weekProgress = totalWeeks > 0 ? (currentWeekNumber / totalWeeks) * 100 : 0
 
   return (
-    <Card className="bg-gradient-to-br from-primary/5 via-transparent to-primary/3">
+    <Card className="h-full bg-gradient-to-br from-primary/5 via-transparent to-primary/3">
       <CardContent className="space-y-4">
         {/* 헤더: 시즌명 + 상태 + 기간 */}
         <div className="flex flex-wrap items-center justify-between gap-2">
