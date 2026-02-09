@@ -9,8 +9,23 @@ export default async function InviteCodesPage() {
   // 초대 코드 목록 조회 (최신순)
   const { data: codes } = await supabase
     .from('invite_codes')
-    .select('id, code, is_used, created_at, used_at, created_by, used_by')
+    .select('id, code, is_used, created_at, used_at, created_by, used_by, season_id')
     .order('created_at', { ascending: false })
+
+  // 시즌 목록 조회
+  const { data: seasons } = await supabase
+    .from('seasons')
+    .select('id, name, is_active')
+    .order('created_at', { ascending: false })
+
+  // 시즌 이름 맵
+  const seasonMap = new Map<string, string>()
+  for (const s of seasons || []) {
+    seasonMap.set(s.id, s.name)
+  }
+
+  // 활성 시즌
+  const activeSeason = (seasons || []).find((s) => s.is_active) ?? null
 
   // 관련 사용자 ID 수집 → 일괄 프로필 조회 (N+1 → 2 쿼리)
   const userIds = new Set<string>()
@@ -30,16 +45,23 @@ export default async function InviteCodesPage() {
     }
   }
 
-  const codesWithNicknames = (codes || []).map((code) => ({
+  const codesWithDetails = (codes || []).map((code) => ({
     ...code,
     created_by_nickname: code.created_by ? nicknameMap.get(code.created_by) ?? null : null,
     used_by_nickname: code.used_by ? nicknameMap.get(code.used_by) ?? null : null,
+    season_name: code.season_id ? seasonMap.get(code.season_id) ?? null : null,
   }))
 
   // 통계
-  const total = codesWithNicknames.length
-  const used = codesWithNicknames.filter((c) => c.is_used).length
+  const total = codesWithDetails.length
+  const used = codesWithDetails.filter((c) => c.is_used).length
   const unused = total - used
+
+  const seasonOptions = (seasons || []).map((s) => ({
+    id: s.id,
+    name: s.name,
+    isActive: s.is_active,
+  }))
 
   return (
     <div>
@@ -50,14 +72,17 @@ export default async function InviteCodesPage() {
             초대 코드 생성 및 사용 현황
           </p>
         </div>
-        <CreateCodesButton />
+        <CreateCodesButton
+          seasons={seasonOptions}
+          activeSeasonId={activeSeason?.id ?? null}
+        />
       </div>
 
       <div className="mb-6">
         <InviteCodesStats total={total} used={used} unused={unused} />
       </div>
 
-      <InviteCodesList codes={codesWithNicknames} />
+      <InviteCodesList codes={codesWithDetails} />
     </div>
   )
 }

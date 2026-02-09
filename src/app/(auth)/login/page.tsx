@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { login } from '@/actions/auth'
 import { Loader2, AlertCircle, Mail, Lock, CheckCircle2 } from 'lucide-react'
+import { UserGuideDialog } from '@/components/auth/user-guide-dialog'
 
 function LoginForm() {
   const router = useRouter()
@@ -205,6 +206,8 @@ function LoginForm() {
               회원가입
             </Link>
           </p>
+
+          <UserGuideDialog />
         </CardFooter>
       </form>
     </Card>

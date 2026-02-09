@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { parseFormData } from '@/lib/actions/types'
 import { resetRequestSchema, updatePasswordSchema, changePasswordSchema } from '@/lib/schemas'
 import { rateLimit } from '@/lib/rate-limit'
@@ -22,6 +23,16 @@ export async function requestPasswordReset(formData: FormData) {
   const result = parseFormData(resetRequestSchema, rawData)
   if (!result.success) return { error: result.error }
 
+  // 이메일 존재 여부 확인 (service_role로만 호출 가능)
+  const adminClient = createAdminClient()
+  const { data: exists } = await adminClient.rpc('check_email_exists', {
+    email_input: result.data.email,
+  })
+
+  if (!exists) {
+    return { error: '등록되지 않은 이메일입니다.' }
+  }
+
   const origin = formData.get('origin') as string
   const supabase = await createClient()
 
@@ -29,7 +40,6 @@ export async function requestPasswordReset(formData: FormData) {
     redirectTo: `${origin}/auth/confirm?next=/reset-password/update`,
   })
 
-  // 이메일 존재 여부와 무관하게 항상 성공 응답 (보안)
   return { success: true }
 }
 

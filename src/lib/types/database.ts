@@ -38,6 +38,7 @@ export interface Database {
           is_used: boolean
           created_at: string
           used_at: string | null
+          season_id: string | null
         }
         Insert: {
           id?: string
@@ -47,6 +48,7 @@ export interface Database {
           is_used?: boolean
           created_at?: string
           used_at?: string | null
+          season_id?: string | null
         }
         Update: {
           id?: string
@@ -56,6 +58,7 @@ export interface Database {
           is_used?: boolean
           created_at?: string
           used_at?: string | null
+          season_id?: string | null
         }
       }
       seasons: {

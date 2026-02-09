@@ -9,7 +9,10 @@ const MAX_INVITE_CODES = 50
 /**
  * 초대 코드 생성
  */
-export async function createInviteCodeAction(count: number = 1) {
+export async function createInviteCodeAction(
+  count: number = 1,
+  seasonId?: string | null
+) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
 
@@ -20,6 +23,7 @@ export async function createInviteCodeAction(count: number = 1) {
   const codes = Array.from({ length: count }, () => ({
     code: inviteCode(),
     created_by: auth.user.id,
+    ...(seasonId ? { season_id: seasonId } : {}),
   }))
 
   const { data, error } = await auth.supabase
