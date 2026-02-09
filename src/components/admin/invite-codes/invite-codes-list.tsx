@@ -25,6 +25,7 @@ interface InviteCode {
   used_at: string | null
   created_by_nickname: string | null
   used_by_nickname: string | null
+  season_name: string | null
 }
 
 interface InviteCodesListProps {
@@ -69,6 +70,7 @@ export function InviteCodesList({ codes }: InviteCodesListProps) {
         <TableHeader>
           <TableRow>
             <TableHead>코드</TableHead>
+            <TableHead>시즌</TableHead>
             <TableHead>상태</TableHead>
             <TableHead>생성자</TableHead>
             <TableHead>생성일</TableHead>
@@ -99,6 +101,13 @@ export function InviteCodesList({ codes }: InviteCodesListProps) {
                   </Button>
                   {copied === code.code && (
                     <span className="ml-1 text-xs text-green-600">복사됨</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {code.season_name ? (
+                    <Badge variant="outline">{code.season_name}</Badge>
+                  ) : (
+                    '-'
                   )}
                 </TableCell>
                 <TableCell>
