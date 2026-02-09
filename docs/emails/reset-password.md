@@ -13,10 +13,8 @@ Riffle - 비밀번호 재설정
 
   <!-- Header -->
   <div style="text-align: center; padding: 40px 0 24px;">
-    <div style="display: inline-block; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
-      <img src="https://api.iconify.design/lucide/radio.svg?color=white&width=28&height=28" alt="Riffle" style="display: block;" />
-    </div>
-    <h1 style="margin: 0; font-size: 22px; font-weight: 700; background: linear-gradient(to right, #2563eb, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Riffle</h1>
+    <div style="font-size: 32px; margin-bottom: 8px;">📻</div>
+    <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #2563eb;">Riffle</h1>
     <p style="margin: 4px 0 0; font-size: 12px; color: #6b7280;">경제 라디오 스터디</p>
   </div>
 
@@ -27,14 +25,29 @@ Riffle - 비밀번호 재설정
       비밀번호 재설정을 요청하셨습니다.<br/>아래 버튼을 클릭하여 새 비밀번호를 설정해주세요.
     </p>
 
-    <a href="{{ .ConfirmationURL }}"
-       style="display: inline-block; padding: 12px 32px; background: linear-gradient(to right, #2563eb, #7c3aed); color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+    <!--[if mso]>
+    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password/update" style="height:44px;v-text-anchor:middle;width:220px;" arcsize="18%" fillcolor="#2563eb">
+      <w:anchorlock/>
+      <center style="color:#ffffff;font-family:sans-serif;font-size:14px;font-weight:bold;">비밀번호 재설정하기</center>
+    </v:roundrect>
+    <![endif]-->
+    <!--[if !mso]><!-->
+    <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password/update"
+       style="display: inline-block; padding: 12px 32px; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
       비밀번호 재설정하기
     </a>
+    <!--<![endif]-->
 
     <p style="margin: 24px 0 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
       버튼이 작동하지 않으면 아래 링크를 브라우저에 붙여넣으세요:<br/>
-      <a href="{{ .ConfirmationURL }}" style="color: #2563eb; word-break: break-all;">{{ .ConfirmationURL }}</a>
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password/update" style="color: #2563eb; word-break: break-all;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password/update</a>
+    </p>
+  </div>
+
+  <!-- Spam notice -->
+  <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0 0; text-align: center;">
+    <p style="margin: 0; font-size: 12px; color: #6b7280; line-height: 1.5;">
+      메일이 보이지 않으면 <strong style="color: #374151;">스팸함</strong>을 확인해주세요.
     </p>
   </div>
 
