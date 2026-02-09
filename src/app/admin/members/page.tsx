@@ -55,6 +55,17 @@ export default async function MembersPage() {
     })
   )
 
+  // 유령 계정 분리 (auth.users에만 존재, profiles에 없는 계정)
+  const profileIds = new Set(profiles?.map((p) => p.id) || [])
+  const orphanUsers = (authUsers?.users || [])
+    .filter((u) => !profileIds.has(u.id))
+    .map((u) => ({
+      id: u.id,
+      email: u.email || '',
+      providers: u.app_metadata?.providers || [],
+      created_at: u.created_at,
+    }))
+
   return (
     <div>
       <div className="mb-4 sm:mb-6">
@@ -67,6 +78,7 @@ export default async function MembersPage() {
       <MembersList
         members={membersWithSeasons}
         currentUserId={user?.id || ''}
+        orphanUsers={orphanUsers}
       />
     </div>
   )

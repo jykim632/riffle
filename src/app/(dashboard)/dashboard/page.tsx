@@ -71,8 +71,9 @@ export default async function DashboardPage() {
       .eq('season_id', currentSeason.id),
   ])
 
-  const memberNicknames = (seasonMembers as { user_id: string; profiles: { nickname: string } | { nickname: string }[] }[] | null)
-    ?.map((m) => {
+  const memberNicknames = (seasonMembers as { user_id: string | null; profiles: { nickname: string } | { nickname: string }[] | null }[] | null)
+    ?.filter((m) => m.user_id !== null)
+    .map((m) => {
       const profile = normalizeRelation(m.profiles)
       return profile?.nickname ?? '알 수 없음'
     })
