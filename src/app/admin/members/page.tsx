@@ -8,9 +8,13 @@ export default async function MembersPage() {
   // service role 클라이언트로 auth.users의 provider 정보 조회
   const adminClient = createAdminClient()
   const { data: authUsers } = await adminClient.auth.admin.listUsers()
-  const providerMap = new Map<string, string[]>()
+  const authUserMap = new Map<string, { providers: string[]; email: string; lastSignIn: string | null }>()
   for (const u of authUsers?.users || []) {
-    providerMap.set(u.id, u.app_metadata?.providers || [])
+    authUserMap.set(u.id, {
+      providers: u.app_metadata?.providers || [],
+      email: u.email || '',
+      lastSignIn: u.last_sign_in_at || null,
+    })
   }
 
   // 현재 사용자 ID (layout에서 인증 확인 완료)
@@ -39,11 +43,14 @@ export default async function MembersPage() {
         })
         .filter((name): name is string => !!name)
 
-      const providers = providerMap.get(profile.id) || []
+      const authInfo = authUserMap.get(profile.id)
       return {
         ...profile,
+        email: authInfo?.email || '',
+        providers: authInfo?.providers || [],
+        lastSignIn: authInfo?.lastSignIn || null,
         seasons,
-        hasPassword: providers.includes('email'),
+        hasPassword: authInfo?.providers?.includes('email') || false,
       }
     })
   )
