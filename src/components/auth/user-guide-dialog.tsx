@@ -106,6 +106,16 @@ export function UserGuideDialog() {
                     네, 초대 코드 입력 후 Google 로그인이 가능합니다.
                   </p>
                 </div>
+                <div className="rounded-lg border p-3 space-y-1">
+                  <p className="font-medium flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                    Google 로그인 시 낯선 주소가 뜨는데 안전한가요?
+                  </p>
+                  <p className="text-muted-foreground pl-5">
+                    Google 로그인 과정에서 <strong className="text-foreground">supabase.co</strong> 주소가 잠깐 표시될 수 있습니다.
+                    이는 Riffle이 사용하는 공식 인증 서비스(Supabase)로, 안전하니 걱정하지 않으셔도 됩니다.
+                  </p>
+                </div>
               </div>
             </section>
           </div>
