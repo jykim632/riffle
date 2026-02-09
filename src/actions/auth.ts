@@ -124,3 +124,29 @@ export async function signup(formData: FormData) {
 
   return { success: true, email }
 }
+
+// 인증 메일 재발송
+export async function resendVerificationEmail(email: string) {
+  const ip = await getClientIp()
+  if ((await rateLimit(`resend:${ip}`, { limit: 3, windowMs: 60_000 })).limited) {
+    return { error: RATE_LIMIT_ERROR }
+  }
+
+  const h = await headers()
+  const origin = h.get('origin') || h.get('x-forwarded-proto') + '://' + h.get('host')
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: `${origin}/auth/confirm?next=/dashboard`,
+    },
+  })
+
+  if (error) {
+    return { error: '메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.' }
+  }
+
+  return { success: true }
+}
