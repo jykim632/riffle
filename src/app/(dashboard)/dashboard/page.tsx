@@ -1,13 +1,10 @@
 import { requireUser } from '@/lib/auth'
 import { getCurrentSeason, getCurrentWeek } from '@/lib/queries/season'
-import { getIndicatorsForWidget, getPreviousIndicators } from '@/lib/queries/indicators'
-import { WIDGET_INDICATOR_CODES } from '@/lib/ecos'
 import { normalizeRelation } from '@/lib/utils/supabase'
 import { EmptyState } from '@/components/empty-state'
 import { WeekOverview } from '@/components/dashboard/week-overview'
 import { CurrentWeekSummaries } from '@/components/dashboard/current-week-summaries'
 import { SeasonBanner } from '@/components/dashboard/season-banner'
-import { MarketSummaryWidget } from '@/components/dashboard/market-summary-widget'
 import { isCurrentSeasonMember, isAdmin } from '@/lib/utils/season-membership'
 import { NonMemberAlert } from '@/components/season/non-member-alert'
 
@@ -29,13 +26,7 @@ export default async function DashboardPage() {
     return <EmptyState title="현재 주차가 없어요" description="관리자에게 주차 생성을 요청하세요." />
   }
 
-  // 4. 시장 요약 위젯용 데이터
-  const [widgetIndicators, widgetPreviousIndicators] = await Promise.all([
-    getIndicatorsForWidget(supabase, currentWeek.id, WIDGET_INDICATOR_CODES),
-    getPreviousIndicators(supabase, currentWeek.id),
-  ])
-
-  // 5. 멤버십 확인
+  // 4. 멤버십 확인
   const member = await isCurrentSeasonMember(user.id)
   const admin = await isAdmin(user.id)
 
@@ -118,33 +109,27 @@ export default async function DashboardPage() {
         {/* 비멤버 경고 배너 */}
         {!admin && !member && <NonMemberAlert />}
 
-        {/* 이번 주차 + 제출 CTA */}
-        <WeekOverview
-          week={currentWeek}
-          mySubmission={mySubmission}
-          allSubmissions={submissionsStatus}
-          isCurrentSeasonMember={admin || member}
-        />
-
-        {/* 이번 주 요약본 */}
-        <CurrentWeekSummaries
-          summaries={currentWeekSummaries ?? []}
-          weekId={currentWeek.id}
-        />
-
-        {/* 시장 요약 */}
-        <MarketSummaryWidget
-          indicators={widgetIndicators}
-          previousIndicators={widgetPreviousIndicators}
-        />
-
-        {/* 시즌 종합 배너 */}
-        <SeasonBanner
-          season={currentSeason}
-          currentWeekNumber={currentWeek.week_number}
-          totalWeeks={totalWeeks ?? 0}
-          members={memberNicknames}
-        />
+        {/* 데스크톱: 2x2 그리드 / 모바일: 수직 스택 */}
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[2fr_3fr]">
+          <WeekOverview
+            week={currentWeek}
+            mySubmission={mySubmission}
+            allSubmissions={submissionsStatus}
+            isCurrentSeasonMember={admin || member}
+          />
+          <CurrentWeekSummaries
+            summaries={currentWeekSummaries ?? []}
+            weekId={currentWeek.id}
+          />
+          <div className="lg:col-span-full">
+            <SeasonBanner
+              season={currentSeason}
+              currentWeekNumber={currentWeek.week_number}
+              totalWeeks={totalWeeks ?? 0}
+              members={memberNicknames}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -29,7 +29,7 @@ export function MarketSummaryWidget({ indicators, previousIndicators }: MarketSu
   if (ordered.length === 0) return null
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">시장 요약</CardTitle>

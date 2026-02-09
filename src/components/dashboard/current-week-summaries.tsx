@@ -27,7 +27,7 @@ interface CurrentWeekSummariesProps {
 export function CurrentWeekSummaries({ summaries, weekId }: CurrentWeekSummariesProps) {
   if (summaries.length === 0) {
     return (
-      <Card className="shadow-sm transition-shadow hover:shadow-md">
+      <Card className="h-full shadow-sm transition-shadow hover:shadow-md">
         <CardHeader className="pb-3 sm:pb-6">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <FileText className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
@@ -53,7 +53,7 @@ export function CurrentWeekSummaries({ summaries, weekId }: CurrentWeekSummaries
   }
 
   return (
-    <Card className="shadow-sm transition-shadow hover:shadow-md">
+    <Card className="h-full shadow-sm transition-shadow hover:shadow-md">
       <CardHeader className="pb-3 sm:pb-6">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <FileText className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
