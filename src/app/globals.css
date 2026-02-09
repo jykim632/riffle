@@ -159,6 +159,7 @@
   border-bottom-color: var(--border) !important;
   background-color: var(--muted) !important;
   border-radius: var(--radius) var(--radius) 0 0 !important;
+  flex-wrap: wrap !important;
 }
 
 .w-md-editor-toolbar li > button {
@@ -175,11 +176,11 @@
 }
 
 .w-md-editor-text-input {
-  font-size: 0.875rem !important;
-  line-height: 1.5 !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.6 !important;
 }
 
 .w-md-editor-text-pre,
 .w-md-editor-text-input {
-  font-family: var(--font-mono), ui-monospace, monospace !important;
+  font-family: var(--font-sans), system-ui, sans-serif !important;
 }

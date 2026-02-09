@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { MarkdownEditor } from './markdown-editor'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SummaryContent } from './summary-content'
 import { createSummary, updateSummary } from '@/actions/summaries'
 import { formatDateRange } from '@/lib/utils/date'
@@ -132,49 +133,48 @@ export function SummaryForm({ mode, weeks, initialWeekId, summaryId, initialCont
 
   return (
     <>
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* 입력 폼 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{mode === 'create' ? '요약본 작성' : '요약본 수정'}</CardTitle>
-            <CardDescription>
-              {mode === 'create' ? '경제 라디오 요약본을 작성해주세요' : '요약본을 수정하세요'}
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <CardContent className="space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                  {error}
-                </div>
-              )}
-
-              {/* 주차 선택 */}
-              <div className="space-y-2">
-                <Label htmlFor="weekId">제출 주차</Label>
-                <Select
-                  value={selectedWeekId}
-                  onValueChange={(value) => setValue('weekId', value)}
-                >
-                  <SelectTrigger id="weekId">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {weeks.map((week) => (
-                      <SelectItem key={week.id} value={week.id}>
-                        {getWeekLabel(week)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.weekId && (
-                  <p className="text-sm text-destructive">{errors.weekId.message}</p>
-                )}
+      <Card>
+        <CardHeader>
+          <CardTitle>{mode === 'create' ? '요약본 작성' : '요약본 수정'}</CardTitle>
+        </CardHeader>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <CardContent className="space-y-4">
+            {error && (
+              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                {error}
               </div>
+            )}
 
-              {/* 내용 입력 */}
-              <div className="space-y-2">
-                <Label>내용 (마크다운 지원)</Label>
+            {/* 주차 선택 */}
+            <div className="space-y-2">
+              <Label htmlFor="weekId">제출 주차</Label>
+              <Select
+                value={selectedWeekId}
+                onValueChange={(value) => setValue('weekId', value)}
+              >
+                <SelectTrigger id="weekId">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {weeks.map((week) => (
+                    <SelectItem key={week.id} value={week.id}>
+                      {getWeekLabel(week)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.weekId && (
+                <p className="text-sm text-destructive">{errors.weekId.message}</p>
+              )}
+            </div>
+
+            {/* 편집 / 미리보기 탭 */}
+            <Tabs defaultValue="edit">
+              <TabsList>
+                <TabsTrigger value="edit">편집</TabsTrigger>
+                <TabsTrigger value="preview">미리보기</TabsTrigger>
+              </TabsList>
+              <TabsContent value="edit" className="mt-3">
                 <MarkdownEditor
                   value={content}
                   onChange={(val) => {
@@ -183,38 +183,33 @@ export function SummaryForm({ mode, weeks, initialWeekId, summaryId, initialCont
                   }}
                   disabled={loading}
                 />
-                {errors.content && (
-                  <p className="text-sm text-destructive">{errors.content.message}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  10자 이상, 10000자 이하로 작성해주세요
-                </p>
-              </div>
+              </TabsContent>
+              <TabsContent value="preview" className="mt-3">
+                <div className="min-h-[200px] rounded-md border border-input p-4">
+                  {content.trim() ? (
+                    <SummaryContent content={content} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      내용을 입력하면 미리보기가 여기에 표시됩니다
+                    </p>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? '제출 중...' : mode === 'create' ? '제출하기' : '수정하기'}
-              </Button>
-            </CardContent>
-          </form>
-        </Card>
-
-        {/* 실시간 프리뷰 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>미리보기</CardTitle>
-            <CardDescription>작성 중인 내용이 어떻게 보일지 확인하세요</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {content.trim() ? (
-              <SummaryContent content={content} />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                내용을 입력하면 미리보기가 여기에 표시됩니다
-              </p>
+            {errors.content && (
+              <p className="text-sm text-destructive">{errors.content.message}</p>
             )}
+            <p className="text-xs text-muted-foreground">
+              마크다운을 지원합니다. 10자 이상, 10,000자 이하로 작성해주세요.
+            </p>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? '제출 중...' : mode === 'create' ? '제출하기' : '수정하기'}
+            </Button>
           </CardContent>
-        </Card>
-      </div>
+        </form>
+      </Card>
 
       {/* 수정 확인 모달 */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
