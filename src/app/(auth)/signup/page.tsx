@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { signupSchema, type SignupInput } from '@/lib/schemas'
+import { signupSchema, type SignupInput, PASSWORD_MIN_LENGTH } from '@/lib/schemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -155,7 +155,7 @@ export default function SignupPage() {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
               <PasswordInput
                 id="password"
-                placeholder="6자 이상"
+                placeholder={`${PASSWORD_MIN_LENGTH}자 이상`}
                 {...register('password')}
                 disabled={loading}
                 autoComplete="new-password"
@@ -169,7 +169,7 @@ export default function SignupPage() {
               </p>
             )}
             <p className="text-xs text-muted-foreground pl-1">
-              비밀번호는 최소 6자 이상이어야 합니다
+              {PASSWORD_MIN_LENGTH}자 이상, 대문자·특수문자 각 1개 이상 포함
             </p>
           </div>
         </CardContent>

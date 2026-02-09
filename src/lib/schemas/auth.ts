@@ -1,9 +1,19 @@
 import { z } from 'zod'
 
-// 로그인 스키마
+export const PASSWORD_MIN_LENGTH = 8
+export const PASSWORD_MAX_LENGTH = 100
+
+const passwordField = z
+  .string()
+  .min(PASSWORD_MIN_LENGTH, `비밀번호는 최소 ${PASSWORD_MIN_LENGTH}자 이상이어야 합니다`)
+  .max(PASSWORD_MAX_LENGTH, `비밀번호는 ${PASSWORD_MAX_LENGTH}자 이하여야 합니다`)
+  .regex(/[A-Z]/, '대문자를 최소 1개 포함해야 합니다')
+  .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, '특수문자를 최소 1개 포함해야 합니다')
+
+// 로그인 스키마 (기존 사용자 호환을 위해 복잡도 검증 미적용)
 export const loginSchema = z.object({
   email: z.string().email('유효한 이메일을 입력해주세요'),
-  password: z.string().min(8, '비밀번호는 최소 8자 이상이어야 합니다'),
+  password: z.string().min(1, '비밀번호를 입력해주세요'),
 })
 
 export type LoginInput = z.infer<typeof loginSchema>
@@ -11,10 +21,7 @@ export type LoginInput = z.infer<typeof loginSchema>
 // 회원가입 스키마
 export const signupSchema = z.object({
   email: z.string().email('유효한 이메일을 입력해주세요'),
-  password: z
-    .string()
-    .min(8, '비밀번호는 최소 8자 이상이어야 합니다')
-    .max(100, '비밀번호는 100자 이하여야 합니다'),
+  password: passwordField,
   nickname: z
     .string()
     .min(1, '닉네임을 입력해주세요')
@@ -39,10 +46,7 @@ export type ResetRequestInput = z.infer<typeof resetRequestSchema>
 // 새 비밀번호 설정 스키마
 export const updatePasswordSchema = z
   .object({
-    password: z
-      .string()
-      .min(8, '비밀번호는 최소 8자 이상이어야 합니다')
-      .max(100, '비밀번호는 100자 이하여야 합니다'),
+    password: passwordField,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -56,10 +60,7 @@ export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, '현재 비밀번호를 입력해주세요'),
-    newPassword: z
-      .string()
-      .min(8, '비밀번호는 최소 8자 이상이어야 합니다')
-      .max(100, '비밀번호는 100자 이하여야 합니다'),
+    newPassword: passwordField,
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

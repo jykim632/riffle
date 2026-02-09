@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
         .maybeSingle()
 
       if (!codeData) {
-        // 초대 코드 없음 - 계정 삭제하고 에러
-        await supabase.auth.signOut()
+        // 초대 코드 무효 - 유령 계정 방지를 위해 계정 삭제
+        await adminClient.auth.admin.deleteUser(data.user.id)
         return NextResponse.redirect(
           `${requestUrl.origin}/google?error=${encodeURIComponent('유효하지 않은 초대 코드입니다.')}`
         )
@@ -58,14 +58,16 @@ export async function GET(request: NextRequest) {
       })
 
       if (!acquired) {
-        console.error('초대 코드 사용 실패 (OAuth):', {
-          code: inviteCode,
-          userId: data.user.id,
-        })
+        // 초대 코드 사용 실패 - 유령 계정 방지를 위해 계정 삭제
+        await adminClient.auth.admin.deleteUser(data.user.id)
+        return NextResponse.redirect(
+          `${requestUrl.origin}/google?error=${encodeURIComponent('초대 코드 처리 중 오류가 발생했습니다. 다시 시도해주세요.')}`
+        )
       }
     } else if (!profile && !inviteCode) {
-      // 신규 사용자인데 초대 코드 없음 - 회원가입 페이지로 안내
-      await supabase.auth.signOut()
+      // 신규 사용자인데 초대 코드 없음 - 유령 계정 방지를 위해 계정 삭제
+      const adminClient = createAdminClient()
+      await adminClient.auth.admin.deleteUser(data.user.id)
       return NextResponse.redirect(
         `${requestUrl.origin}/signup?error=${encodeURIComponent('회원가입이 필요합니다. 초대 코드를 입력해주세요.')}`
       )
