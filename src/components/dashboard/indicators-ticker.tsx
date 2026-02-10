@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { INDICATOR_MAP, WIDGET_INDICATOR_CODES } from '@/lib/ecos'
+import { INDICATOR_MAP, INDICATORS } from '@/lib/ecos'
 import { formatDate } from '@/lib/utils/date'
 
 interface TickerIndicator {
@@ -21,8 +21,8 @@ export function IndicatorsTicker({ indicators, previousIndicators }: IndicatorsT
     previousIndicators.map((p) => [p.indicator_code, p.data_value])
   )
 
-  const ordered = WIDGET_INDICATOR_CODES
-    .map((code) => indicators.find((ind) => ind.indicator_code === code))
+  const ordered = INDICATORS
+    .map((def) => indicators.find((ind) => ind.indicator_code === def.code))
     .filter(Boolean) as TickerIndicator[]
 
   if (ordered.length === 0) return null

@@ -1,7 +1,6 @@
 import { requireUser } from '@/lib/auth'
 import { getCurrentSeason, getCurrentWeek } from '@/lib/queries/season'
-import { getIndicatorsForWidget, getPreviousIndicators } from '@/lib/queries/indicators'
-import { WIDGET_INDICATOR_CODES } from '@/lib/ecos'
+import { getIndicatorsByWeek, getPreviousIndicators } from '@/lib/queries/indicators'
 import { Header } from '@/components/dashboard/header'
 import { IndicatorsTicker } from '@/components/dashboard/indicators-ticker'
 import { redirect } from 'next/navigation'
@@ -40,7 +39,7 @@ export default async function DashboardLayout({
   // 경제지표 티커 데이터 (현재 + 이전 주차)
   const [tickerIndicators, tickerPreviousIndicators] = currentWeek
     ? await Promise.all([
-        getIndicatorsForWidget(supabase, currentWeek.id, WIDGET_INDICATOR_CODES),
+        getIndicatorsByWeek(supabase, currentWeek.id),
         getPreviousIndicators(supabase, currentWeek.id),
       ])
     : [[], []]
