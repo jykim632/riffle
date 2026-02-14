@@ -33,7 +33,7 @@ export async function requestPasswordReset(formData: FormData) {
     return { error: '등록되지 않은 이메일입니다.' }
   }
 
-  const origin = formData.get('origin') as string
+  const origin = process.env.NEXT_PUBLIC_APP_URL
   const supabase = await createClient()
 
   await supabase.auth.resetPasswordForEmail(result.data.email, {

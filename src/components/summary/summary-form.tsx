@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -58,6 +58,22 @@ export function SummaryForm({ mode, weeks, initialWeekId, summaryId, initialCont
   const [content, setContent] = useState(initialContent)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [pendingData, setPendingData] = useState<CreateSummaryInput | UpdateSummaryInput | null>(null)
+
+  // 작성 중 페이지 이탈 방지
+  const isDirty = mode === 'create'
+    ? content.trim().length > 0
+    : content !== initialContent
+
+  const handleBeforeUnload = useCallback((e: BeforeUnloadEvent) => {
+    if (isDirty) {
+      e.preventDefault()
+    }
+  }, [isDirty])
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [handleBeforeUnload])
 
   const schema = mode === 'create' ? createSummarySchema : updateSummarySchema
 
