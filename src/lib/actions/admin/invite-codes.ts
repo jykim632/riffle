@@ -3,8 +3,7 @@
 import { inviteCode } from '@/lib/nanoid'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from './auth-guard'
-
-const MAX_INVITE_CODES = 50
+import { adminCreateInviteCodeSchema, inviteCodeIdSchema } from '@/lib/schemas/admin'
 
 /**
  * 초대 코드 생성
@@ -16,8 +15,9 @@ export async function createInviteCodeAction(
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
 
-  if (count < 1 || count > MAX_INVITE_CODES) {
-    return { success: false, error: `1~${MAX_INVITE_CODES}개 사이로 입력하세요.` }
+  const parsed = adminCreateInviteCodeSchema.safeParse({ count, seasonId: seasonId ?? null })
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
   }
 
   const codes = Array.from({ length: count }, () => ({
@@ -45,6 +45,11 @@ export async function createInviteCodeAction(
 export async function deleteInviteCodeAction(codeId: string) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
+
+  const parsed = inviteCodeIdSchema.safeParse(codeId)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
+  }
 
   const { error } = await auth.supabase
     .from('invite_codes')

@@ -23,22 +23,20 @@ export async function requestPasswordReset(formData: FormData) {
   const result = parseFormData(resetRequestSchema, rawData)
   if (!result.success) return { error: result.error }
 
-  // 이메일 존재 여부 확인 (service_role로만 호출 가능)
+  // 이메일 존재 여부에 관계없이 동일 응답 (열거 공격 방지)
   const adminClient = createAdminClient()
   const { data: exists } = await adminClient.rpc('check_email_exists', {
     email_input: result.data.email,
   })
 
-  if (!exists) {
-    return { error: '등록되지 않은 이메일입니다.' }
+  if (exists) {
+    const origin = process.env.NEXT_PUBLIC_APP_URL
+    const supabase = await createClient()
+
+    await supabase.auth.resetPasswordForEmail(result.data.email, {
+      redirectTo: `${origin}/auth/confirm?next=/reset-password/update`,
+    })
   }
-
-  const origin = process.env.NEXT_PUBLIC_APP_URL
-  const supabase = await createClient()
-
-  await supabase.auth.resetPasswordForEmail(result.data.email, {
-    redirectTo: `${origin}/auth/confirm?next=/reset-password/update`,
-  })
 
   return { success: true }
 }

@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * 현재 시즌의 멤버인지 확인
  */
-export async function isCurrentSeasonMember(userId: string): Promise<boolean> {
-  const supabase = await createClient()
+export async function isCurrentSeasonMember(userId: string, client?: SupabaseClient): Promise<boolean> {
+  const supabase = client ?? await createClient()
 
   // 현재 활성 시즌 조회
   const { data: currentSeason } = await supabase
@@ -48,8 +49,8 @@ export async function isSeasonMember(
 /**
  * 관리자인지 확인
  */
-export async function isAdmin(userId: string): Promise<boolean> {
-  const supabase = await createClient()
+export async function isAdmin(userId: string, client?: SupabaseClient): Promise<boolean> {
+  const supabase = client ?? await createClient()
 
   const { data: profile } = await supabase
     .from('profiles')

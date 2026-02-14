@@ -4,6 +4,7 @@ import { seasonId } from '@/lib/nanoid'
 import { generateWeeks } from '@/lib/utils/week-generator'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from './auth-guard'
+import { createSeasonSchema, seasonIdSchema, addSeasonMembersSchema, userIdSchema } from '@/lib/schemas/admin'
 
 interface CreateSeasonInput {
   name: string
@@ -17,6 +18,11 @@ interface CreateSeasonInput {
 export async function createSeasonAction(data: CreateSeasonInput) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
+
+  const parsed = createSeasonSchema.safeParse(data)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
+  }
 
   // 1. 시즌 생성
   const newSeasonId = seasonId()
@@ -58,6 +64,11 @@ export async function updateSeasonAction(
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
 
+  const parsedId = seasonIdSchema.safeParse(sid)
+  if (!parsedId.success) {
+    return { success: false, error: parsedId.error.issues[0].message }
+  }
+
   const { error } = await auth.supabase
     .from('seasons')
     .update(data)
@@ -77,6 +88,11 @@ export async function updateSeasonAction(
 export async function toggleSeasonActiveAction(sid: string, isActive: boolean) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
+
+  const parsedId = seasonIdSchema.safeParse(sid)
+  if (!parsedId.success) {
+    return { success: false, error: parsedId.error.issues[0].message }
+  }
 
   if (isActive) {
     // 활성화하려는 경우: 기존 활성 시즌을 확인하고 비활성화
@@ -137,6 +153,11 @@ export async function addSeasonMembersAction(sid: string, userIds: string[]) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
 
+  const parsed = addSeasonMembersSchema.safeParse({ seasonId: sid, userIds })
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
+  }
+
   const members = userIds.map((userId) => ({
     season_id: sid,
     user_id: userId,
@@ -158,6 +179,15 @@ export async function addSeasonMembersAction(sid: string, userIds: string[]) {
 export async function removeSeasonMemberAction(sid: string, userId: string) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
+
+  const parsedSid = seasonIdSchema.safeParse(sid)
+  const parsedUid = userIdSchema.safeParse(userId)
+  if (!parsedSid.success) {
+    return { success: false, error: parsedSid.error.issues[0].message }
+  }
+  if (!parsedUid.success) {
+    return { success: false, error: parsedUid.error.issues[0].message }
+  }
 
   const { error } = await auth.supabase
     .from('season_members')

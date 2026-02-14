@@ -15,3 +15,6 @@ export * from './comment'
 
 // Indicator schemas
 export * from './indicator'
+
+// Admin schemas
+export * from './admin'
