@@ -1,18 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <title>Riffle Icon</title>
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2563eb" />
-      <stop offset="100%" stop-color="#7c3aed" />
-    </linearGradient>
-  </defs>
-
-  <rect x="24" y="24" width="464" height="464" rx="116" fill="url(#bg)" />
-
-  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="210" cy="302" r="22" stroke-width="24" />
-    <path d="M244 274c18-18 48-18 66 0" stroke-width="20" />
-    <path d="M268 246c31-30 82-30 112 0" stroke-width="18" opacity="0.95" />
-    <path d="M175 352l64-64" stroke-width="20" opacity="0.95" />
+  <rect width="512" height="512" rx="96" fill="#ffffff"/>
+  <!-- Book -->
+  <g fill="none" stroke="#173B45" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left page -->
+    <path d="M100 390V150c0-20 16-36 36-36h100c20 0 20 0 20 20v256"/>
+    <!-- Right page -->
+    <path d="M412 390V150c0-20-16-36-36-36H276c-20 0-20 0-20 20v256"/>
+    <!-- Spine -->
+    <line x1="256" y1="134" x2="256" y2="390"/>
+    <!-- Bottom edge -->
+    <path d="M100 390h156m0 0h156"/>
+  </g>
+  <!-- Chart arrow -->
+  <g fill="none" stroke="#2D6A4F" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="140,320 210,260 280,300 370,160"/>
+    <polyline points="320,155 375,155 375,210" stroke-width="22"/>
   </g>
 </svg>
