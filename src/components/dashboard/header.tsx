@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Calendar, BookOpen, Radio } from 'lucide-react'
+import { Calendar, BookOpen, Radio, Trophy } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -48,6 +48,12 @@ export function Header({ currentWeek, user, isAdmin = false }: HeaderProps) {
             className="transition-colors hover:text-primary"
           >
             경제지표
+          </Link>
+          <Link
+            href="/leaderboard"
+            className="transition-colors hover:text-primary"
+          >
+            리더보드
           </Link>
           {isAdmin && (
             <Link
