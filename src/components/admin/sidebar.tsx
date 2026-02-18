@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Calendar, List, Users, Key, BarChart3 } from 'lucide-react'
+import { Calendar, List, Users, Key, BarChart3, HardDrive } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -30,6 +30,11 @@ const navItems = [
     href: '/admin/indicators',
     icon: BarChart3,
     label: '경제지표',
+  },
+  {
+    href: '/admin/backup',
+    icon: HardDrive,
+    label: '백업/관리',
   },
 ]
 

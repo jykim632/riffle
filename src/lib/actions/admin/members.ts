@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from './auth-guard'
+import { updateMemberRoleSchema, userIdSchema } from '@/lib/schemas/admin'
 
 /**
  * 멤버 역할 변경 (admin ↔ member)
@@ -13,6 +14,11 @@ export async function updateMemberRoleAction(
 ) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
+
+  const parsed = updateMemberRoleSchema.safeParse({ userId, role })
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
+  }
 
   const { error } = await auth.supabase
     .from('profiles')
@@ -35,6 +41,11 @@ export async function deleteUserAccountAction(userId: string) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
 
+  const parsed = userIdSchema.safeParse(userId)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
+  }
+
   // 관리자 본인 삭제 방지
   if (auth.user.id === userId) {
     return { success: false, error: '본인 계정은 삭제할 수 없습니다.' }
@@ -54,25 +65,34 @@ export async function deleteUserAccountAction(userId: string) {
 
 /**
  * 멤버 비밀번호 초기화 (관리자 전용)
- * 환경변수 ADMIN_RESET_PASSWORD에 설정된 고정 비밀번호로 초기화
+ * 해당 멤버 이메일로 비밀번호 재설정 메일 발송
  */
 export async function resetMemberPasswordAction(userId: string) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
 
-  const resetPassword = process.env.ADMIN_RESET_PASSWORD
-  if (!resetPassword) {
-    return { success: false, error: 'ADMIN_RESET_PASSWORD 환경변수가 설정되지 않았습니다.' }
+  const parsed = userIdSchema.safeParse(userId)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
   }
 
   const adminClient = createAdminClient()
 
-  const { error } = await adminClient.auth.admin.updateUserById(userId, {
-    password: resetPassword,
-  })
+  // 대상 유저 이메일 조회
+  const { data: targetUser, error: userError } = await adminClient.auth.admin.getUserById(userId)
+
+  if (userError || !targetUser?.user?.email) {
+    return { success: false, error: '사용자 정보를 찾을 수 없습니다.' }
+  }
+
+  const origin = process.env.NEXT_PUBLIC_APP_URL
+  const { error } = await auth.supabase.auth.resetPasswordForEmail(
+    targetUser.user.email,
+    { redirectTo: `${origin}/auth/confirm?next=/reset-password/update` }
+  )
 
   if (error) {
-    return { success: false, error: '비밀번호 초기화에 실패했습니다.' }
+    return { success: false, error: '비밀번호 재설정 메일 발송에 실패했습니다.' }
   }
 
   return { success: true }

@@ -45,6 +45,7 @@ export function CommentItem({ comment, isAuthor }: CommentItemProps) {
       return
     }
 
+    toast.success('댓글이 수정되었습니다.')
     setEditing(false)
     setLoading(false)
   }
@@ -60,7 +61,10 @@ export function CommentItem({ comment, isAuthor }: CommentItemProps) {
     if (result?.error) {
       toast.error(result.error)
       setLoading(false)
+      return
     }
+
+    toast.success('댓글이 삭제되었습니다.')
   }
 
   return (

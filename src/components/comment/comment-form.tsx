@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { createComment } from '@/actions/comments'
+import { toast } from 'sonner'
 
 interface CommentFormProps {
   summaryId: string
@@ -32,6 +33,7 @@ export function CommentForm({ summaryId }: CommentFormProps) {
       return
     }
 
+    toast.success('댓글이 작성되었습니다.')
     setContent('')
     setLoading(false)
   }

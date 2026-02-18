@@ -191,6 +191,38 @@ export interface Database {
           updated_at?: string
         }
       }
+      shared_links: {
+        Row: {
+          id: string
+          season_id: string
+          author_id: string | null
+          url: string
+          title: string
+          category: 'article' | 'book' | 'video'
+          comment: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          season_id: string
+          author_id: string
+          url: string
+          title: string
+          category?: 'article' | 'book' | 'video'
+          comment?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          season_id?: string
+          author_id?: string
+          url?: string
+          title?: string
+          category?: 'article' | 'book' | 'video'
+          comment?: string | null
+          created_at?: string
+        }
+      }
       economic_indicators: {
         Row: {
           id: string

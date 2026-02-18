@@ -26,28 +26,48 @@ export default async function DashboardPage() {
     return <EmptyState title="현재 주차가 없어요" description="관리자에게 주차 생성을 요청하세요." />
   }
 
-  // 4. 멤버십 확인
-  const member = await isCurrentSeasonMember(user.id)
-  const admin = await isAdmin(user.id)
-
-  // 6. 내 제출 현황
-  const { data: mySubmission } = await supabase
-    .from('summaries')
-    .select('created_at')
-    .eq('week_id', currentWeek.id)
-    .eq('author_id', user.id)
-    .maybeSingle()
-
-  // 7. 전체 제출 현황
-  const { data: allProfiles } = await supabase
-    .from('profiles')
-    .select('id, nickname')
-    .order('nickname')
-
-  const { data: allSubmissions } = await supabase
-    .from('summaries')
-    .select('author_id')
-    .eq('week_id', currentWeek.id)
+  // 4~9. 독립 쿼리 병렬 실행 (supabase 클라이언트 재사용)
+  const [
+    member,
+    admin,
+    { data: mySubmission },
+    { data: allProfiles },
+    { data: allSubmissions },
+    { count: totalWeeks },
+    { data: seasonMembers },
+    { data: currentWeekSummariesRaw },
+  ] = await Promise.all([
+    isCurrentSeasonMember(user.id, supabase),
+    isAdmin(user.id, supabase),
+    supabase
+      .from('summaries')
+      .select('created_at')
+      .eq('week_id', currentWeek.id)
+      .eq('author_id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('profiles')
+      .select('id, nickname')
+      .order('nickname'),
+    supabase
+      .from('summaries')
+      .select('author_id')
+      .eq('week_id', currentWeek.id),
+    supabase
+      .from('weeks')
+      .select('*', { count: 'exact', head: true })
+      .eq('season_id', currentSeason.id),
+    supabase
+      .from('season_members')
+      .select('user_id, profiles(nickname)')
+      .eq('season_id', currentSeason.id),
+    supabase
+      .from('first_summaries')
+      .select('id, author_id, content, created_at, profiles(nickname)')
+      .eq('week_id', currentWeek.id)
+      .order('created_at', { ascending: false })
+      .limit(10),
+  ])
 
   const submissionsStatus =
     allProfiles?.map((profile) => ({
@@ -59,32 +79,13 @@ export default async function DashboardPage() {
   const totalMembers = submissionsStatus.length
   const submittedCount = submissionsStatus.filter((s) => s.has_submitted).length
 
-  // 8. 시즌 전체 주차 수 + 멤버 수
-  const [{ count: totalWeeks }, { data: seasonMembers }] = await Promise.all([
-    supabase
-      .from('weeks')
-      .select('*', { count: 'exact', head: true })
-      .eq('season_id', currentSeason.id),
-    supabase
-      .from('season_members')
-      .select('user_id, profiles(nickname)')
-      .eq('season_id', currentSeason.id),
-  ])
-
-  const memberNicknames = (seasonMembers as { user_id: string; profiles: { nickname: string } | { nickname: string }[] }[] | null)
-    ?.map((m) => {
+  const memberNicknames = (seasonMembers as { user_id: string | null; profiles: { nickname: string } | { nickname: string }[] | null }[] | null)
+    ?.filter((m) => m.user_id !== null)
+    .map((m) => {
       const profile = normalizeRelation(m.profiles)
       return profile?.nickname ?? '알 수 없음'
     })
     .sort() ?? []
-
-  // 9. 현재 주차 요약본 (first_summaries 뷰 사용 - 각 사용자별 첫 번째 요약만)
-  const { data: currentWeekSummariesRaw } = await supabase
-    .from('first_summaries')
-    .select('id, author_id, content, created_at, profiles(nickname)')
-    .eq('week_id', currentWeek.id)
-    .order('created_at', { ascending: false })
-    .limit(10)
 
   // Supabase 뷰 JOIN 결과 타입 (first_summaries + profiles)
   type SummaryWithProfile = {

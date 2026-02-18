@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from './auth-guard'
+import { weekIdSchema, updateWeekSchema } from '@/lib/schemas/admin'
 
 /**
  * 현재 주차 설정 토글
@@ -10,6 +11,11 @@ import { requireAdmin } from './auth-guard'
 export async function toggleWeekCurrentAction(weekId: string, isCurrent: boolean) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
+
+  const parsed = weekIdSchema.safeParse(weekId)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
+  }
 
   if (isCurrent) {
     // 활성화하려는 경우: 기존 현재 주차를 해제
@@ -39,6 +45,15 @@ export async function updateWeekAction(
 ) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response
+
+  const parsedId = weekIdSchema.safeParse(weekId)
+  if (!parsedId.success) {
+    return { success: false, error: parsedId.error.issues[0].message }
+  }
+  const parsedData = updateWeekSchema.safeParse(data)
+  if (!parsedData.success) {
+    return { success: false, error: parsedData.error.issues[0].message }
+  }
 
   const { error } = await auth.supabase
     .from('weeks')
