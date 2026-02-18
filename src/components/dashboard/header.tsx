@@ -50,6 +50,12 @@ export function Header({ currentWeek, user, isAdmin = false }: HeaderProps) {
             경제지표
           </Link>
           <Link
+            href="/links"
+            className="transition-colors hover:text-primary"
+          >
+            추천글
+          </Link>
+          <Link
             href="/leaderboard"
             className="transition-colors hover:text-primary"
           >

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Menu, LayoutDashboard, FileText, BarChart3, Trophy, Shield, Radio, BookOpen } from 'lucide-react'
+import { Menu, LayoutDashboard, FileText, BarChart3, Link2, Trophy, Shield, Radio, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -20,6 +20,7 @@ const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: '대시보드' },
   { href: '/summaries', icon: FileText, label: '게시판' },
   { href: '/indicators', icon: BarChart3, label: '경제지표' },
+  { href: '/links', icon: Link2, label: '추천글' },
   { href: '/leaderboard', icon: Trophy, label: '리더보드' },
 ]
 
