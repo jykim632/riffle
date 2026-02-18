@@ -18,3 +18,6 @@ export * from './indicator'
 
 // Admin schemas
 export * from './admin'
+
+// Backup schemas
+export * from './backup'
